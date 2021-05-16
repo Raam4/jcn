@@ -11,8 +11,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 sys.path.append("./")
-#import handle
-#import utils
+import utils
 
 class Ui_reunionW(object):
     def setupUi(self, reunionW):
@@ -22,12 +21,9 @@ class Ui_reunionW(object):
         reunionW.setMinimumSize(QtCore.QSize(250, 100))
         reunionW.setMaximumSize(QtCore.QSize(350, 150))
         
-        self.creaBtt = QtWidgets.QPushButton(reunionW)
-        self.creaBtt.setGeometry(QtCore.QRect(40, 80, 75, 23))
-        self.creaBtt.setObjectName("creaBtt")
-        
         self.label = QtWidgets.QLabel(reunionW)
         self.label.setGeometry(QtCore.QRect(10, 10, 141, 41))
+
         font = QtGui.QFont()
         font.setFamily("Verdana")
         font.setPointSize(9)
@@ -53,32 +49,28 @@ class Ui_reunionW(object):
         
         self.label_2.setFont(font)
         self.label_2.setObjectName("label_2")
-        
-        self.creaL = QtWidgets.QLineEdit(reunionW)
-        self.creaL.setGeometry(QtCore.QRect(20, 50, 121, 20))
-        self.creaL.setPlaceholderText("Ingrese un numero de reunión")
-        self.creaL.setMaxLength(2)
-        self.creaL.setValidator(QtGui.QIntValidator())
-        self.creaL.setObjectName("creaL")
+
+        self.creaBtt = QtWidgets.QPushButton(reunionW)
+        self.creaBtt.setGeometry(QtCore.QRect(40, 60, 75, 23))
+        self.creaBtt.setObjectName("creaBtt")
+        self.creaBtt.clicked.connect(self.creaReunion)
         
         self.buscaL = QtWidgets.QLineEdit(reunionW)
         self.buscaL.setGeometry(QtCore.QRect(200, 50, 121, 20))
-        self.creaL.setPlaceholderText("Ingrese un numero de reunión")
-        self.creaL.setMaxLength(2)
-        self.creaL.setValidator(QtGui.QIntValidator())
+        self.buscaL.setPlaceholderText("Ingrese un numero de reunión")
+        self.buscaL.setMaxLength(2)
+        self.buscaL.setValidator(QtGui.QIntValidator())
         self.buscaL.setObjectName("buscaL")
+        self.buscaL.returnPressed.connect(self.buscaReunion)
         
         self.buscaBtt = QtWidgets.QPushButton(reunionW)
         self.buscaBtt.setGeometry(QtCore.QRect(220, 80, 75, 23))
         self.buscaBtt.setObjectName("buscaBtt")
+        self.buscaBtt.clicked.connect(self.buscaReunion)
 
         self.retranslateUi(reunionW)
         QtCore.QMetaObject.connectSlotsByName(reunionW)
 
-        
-        self.buscaL.returnPressed.connect(self.buscaReunion)
-
-        
 
     def retranslateUi(self, reunionW):
         _translate = QtCore.QCoreApplication.translate
@@ -93,10 +85,23 @@ class Ui_reunionW(object):
         return self.nrnn
 
     def buscaReunion(self):
-        #sess = utils.bd()
-        #self.nrnn = str(self.creaL.text())
-        #rnn = sess.execute("SELECT id FROM reunion WHERE id = :val", {'val' : self.nrnn})
-        print('holi')
+        sess = utils.bd()
+        nrnn = int(self.buscaL.text())
+        lng = sess.execute("SELECT COUNT(*) FROM reunion").scalar()
+        if lng < nrnn:
+            rnn = None
+        else:
+            rnn = sess.execute("SELECT numero FROM reunion WHERE numero = :val", {'val' : nrnn})
+            rnn = rnn.fetchone()
+            rnn = rnn['numero']
+        return rnn
+
+    def creaReunion(self):
+        sess = utils.bd()
+        nrnn = sess.execute("SELECT COUNT(*) FROM reunion").scalar()
+        sess.execute("INSERT INTO reunion(numero, nombre) VALUES (:val, 'qwerty')", {'val' : nrnn+1})
+        sess.commit()
+
 
 
 if __name__ == "__main__":
