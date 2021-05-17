@@ -12,6 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 sys.path.append("./")
 import utils
+from widgets.Ui_carreraW import Ui_carreraW
 
 class Ui_reunionW(object):
     def setupUi(self, reunionW):
@@ -54,6 +55,8 @@ class Ui_reunionW(object):
         self.creaBtt.setGeometry(QtCore.QRect(40, 60, 75, 23))
         self.creaBtt.setObjectName("creaBtt")
         self.creaBtt.clicked.connect(self.creaReunion)
+        self.creaBtt.clicked.connect(self.pasarACarrera)
+        
         
         self.buscaL = QtWidgets.QLineEdit(reunionW)
         self.buscaL.setGeometry(QtCore.QRect(200, 50, 121, 20))
@@ -97,18 +100,19 @@ class Ui_reunionW(object):
         return rnn
 
     def creaReunion(self):
+        #utilizar esa funcion para pasar al widget de carrera pasando la nrnn
         sess = utils.bd()
         nrnn = sess.execute("SELECT COUNT(*) FROM reunion").scalar()
         sess.execute("INSERT INTO reunion(numero, nombre) VALUES (:val, 'qwerty')", {'val' : nrnn+1})
         sess.commit()
+        return nrnn
+
+    def pasarACarrera(self):
+        self.crrW = QtWidgets.QWidget()
+        self.uicrr = Ui_carreraW()
+        self.uicrr.setupUi(self.crrW)
+        self.crrW.show()
+        
+        
 
 
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_reunionW()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())

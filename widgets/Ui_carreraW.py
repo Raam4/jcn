@@ -9,6 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import utils
 
 
 class Ui_carreraW(object):
@@ -49,17 +50,9 @@ class Ui_carreraW(object):
 
         self.label_2.setFont(font)
         self.label_2.setObjectName("label_2")
-
-        self.creaL = QtWidgets.QLineEdit(carreraW)
-        self.creaL.setGeometry(QtCore.QRect(20, 50, 121, 20))
-        self.creaL.setPlaceholderText("Ingrese un numero de carrera")
-        self.creaL.setMaxLength(2)
-        self.creaL.setValidator(QtGui.QIntValidator())
-        self.creaL.setObjectName("creaL")
-        self.creaL.returnPressed.connect(self.buscaCarrera)
         
         self.creaBtt = QtWidgets.QPushButton(carreraW)
-        self.creaBtt.setGeometry(QtCore.QRect(40, 80, 75, 23))
+        self.creaBtt.setGeometry(QtCore.QRect(40, 60, 75, 23))
         self.creaBtt.setObjectName("creaBtt")
         self.creaBtt.clicked.connect(self.buscaCarrera)
         
@@ -90,13 +83,22 @@ class Ui_carreraW(object):
 
 
     def buscaCarrera(self):
-        print('holaMundo')
+        sess = utils.bd()
+        ncrr = int(self.buscaL.text())
+        lng = sess.execute("SELECT COUNT(*) FROM carrera").scalar()
+        if lng < ncrr:
+            rnn = None
+        else:
+            rnn = sess.execute("SELECT numero FROM carrera WHERE numero = :val", {'val' : ncrr})
+            rnn = rnn.fetchone()
+            rnn = rnn['numero']
+        return rnn
 
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_carreraW()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
+    def creaCarrera(self):
+        #debe recibir nrnn para ingresar la fk
+        sess = utils.bd()
+        ncrr = sess.execute("SELECT COUNT(*) FROM carrera").scalar()
+        sess.execute("INSERT INTO carrera(numero, hora, nroReunion) VALUES (:val, '12:30', 'nroReunion')", {'val' : ncrr+1})
+        sess.commit()
+        return ncrr
+
