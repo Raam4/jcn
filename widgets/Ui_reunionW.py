@@ -14,7 +14,14 @@ sys.path.append("./")
 import utils
 from widgets.Ui_carreraW import Ui_carreraW
 
-class Ui_reunionW(object):
+class Ui_reunionW(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+
+    #Atributos
+    nroReunion = None
+
     def setupUi(self, reunionW):
         reunionW.setObjectName("reunionW")
         reunionW.setEnabled(True)
@@ -24,13 +31,11 @@ class Ui_reunionW(object):
         
         self.label = QtWidgets.QLabel(reunionW)
         self.label.setGeometry(QtCore.QRect(10, 10, 141, 41))
-
         font = QtGui.QFont()
         font.setFamily("Verdana")
         font.setPointSize(9)
         font.setBold(True)
         font.setWeight(75)
-        
         self.label.setFont(font)
         self.label.setObjectName("label")
         
@@ -47,17 +52,17 @@ class Ui_reunionW(object):
         font.setPointSize(9)
         font.setBold(True)
         font.setWeight(75)
-        
         self.label_2.setFont(font)
         self.label_2.setObjectName("label_2")
-
+        #Boton de Crear
         self.creaBtt = QtWidgets.QPushButton(reunionW)
         self.creaBtt.setGeometry(QtCore.QRect(40, 60, 75, 23))
         self.creaBtt.setObjectName("creaBtt")
         self.creaBtt.clicked.connect(self.creaReunion)
-        self.creaBtt.clicked.connect(self.pasarACarrera)
-        
-        
+        self.wCarrera = None
+        self.creaBtt.clicked.connect(self.goCarrera)
+        self.creaBtt.clicked.connect(self.close)
+        #Linea de Buscar
         self.buscaL = QtWidgets.QLineEdit(reunionW)
         self.buscaL.setGeometry(QtCore.QRect(200, 50, 121, 20))
         self.buscaL.setPlaceholderText("Ingrese un numero de reunión")
@@ -65,7 +70,7 @@ class Ui_reunionW(object):
         self.buscaL.setValidator(QtGui.QIntValidator())
         self.buscaL.setObjectName("buscaL")
         self.buscaL.returnPressed.connect(self.buscaReunion)
-        
+        #Boton de Buscar
         self.buscaBtt = QtWidgets.QPushButton(reunionW)
         self.buscaBtt.setGeometry(QtCore.QRect(220, 80, 75, 23))
         self.buscaBtt.setObjectName("buscaBtt")
@@ -73,7 +78,6 @@ class Ui_reunionW(object):
 
         self.retranslateUi(reunionW)
         QtCore.QMetaObject.connectSlotsByName(reunionW)
-
 
     def retranslateUi(self, reunionW):
         _translate = QtCore.QCoreApplication.translate
@@ -83,22 +87,6 @@ class Ui_reunionW(object):
         self.label_2.setText(_translate("reunionW", "Abrir Reunion Existente"))
         self.buscaBtt.setText(_translate("reunionW", "Buscar"))
 
-    def getNrnn(self):
-        self.nrnn = str(self.creaL.text())
-        return self.nrnn
-
-    def buscaReunion(self):
-        sess = utils.bd()
-        nrnn = int(self.buscaL.text())
-        lng = sess.execute("SELECT COUNT(*) FROM reunion").scalar()
-        if lng < nrnn:
-            rnn = None
-        else:
-            rnn = sess.execute("SELECT numero FROM reunion WHERE numero = :val", {'val' : nrnn})
-            rnn = rnn.fetchone()
-            rnn = rnn['numero']
-        return rnn
-
     def creaReunion(self):
         #utilizar esa funcion para pasar al widget de carrera pasando la nrnn
         sess = utils.bd()
@@ -107,11 +95,22 @@ class Ui_reunionW(object):
         sess.commit()
         return nrnn
 
-    def pasarACarrera(self):
-        self.crrW = QtWidgets.QWidget()
-        self.uicrr = Ui_carreraW()
-        self.uicrr.setupUi(self.crrW)
-        self.crrW.show()
+    def buscaReunion(self):
+        sess = utils.bd()
+        param = int(self.buscaL.text())
+        lng = sess.execute("SELECT COUNT(*) FROM reunion").scalar()
+        if lng < param:
+            pass
+        else:
+            rnn = sess.execute("SELECT numero FROM reunion WHERE numero = :val", {'val' : param})
+            rnn = rnn.fetchone()
+            rnn = rnn['numero']
+        self.nroReunion = rnn
+
+    def goCarrera(self):
+        if self.wCarrera is None:
+            self.wCarrera = Ui_carreraW()
+        self.wCarrera.show()
         
         
 

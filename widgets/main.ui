@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
+ <author>Raama</author>
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
   <property name="geometry">
@@ -18,8 +19,8 @@
   </property>
   <property name="maximumSize">
    <size>
-    <width>1080</width>
-    <height>720</height>
+    <width>600</width>
+    <height>600</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -29,7 +30,7 @@
    <enum>QTabWidget::Rounded</enum>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QGroupBox" name="carga">
+   <widget class="QGroupBox" name="bcarga">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -605,7 +606,7 @@
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton">
+    <widget class="QPushButton" name="descartar">
      <property name="geometry">
       <rect>
        <x>0</x>
@@ -624,7 +625,7 @@
       <string>Descartar</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_2">
+    <widget class="QPushButton" name="guardar">
      <property name="geometry">
       <rect>
        <x>110</x>
@@ -647,7 +648,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="groupBox_2">
+   <widget class="QGroupBox" name="bcarrera">
     <property name="geometry">
      <rect>
       <x>490</x>
@@ -659,7 +660,7 @@
     <property name="title">
      <string>Carrera</string>
     </property>
-    <widget class="QLabel" name="label">
+    <widget class="QLabel" name="lcarrera">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -684,7 +685,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="groupBox_3">
+   <widget class="QGroupBox" name="bremate">
     <property name="geometry">
      <rect>
       <x>240</x>
@@ -696,7 +697,7 @@
     <property name="title">
      <string>Remate </string>
     </property>
-    <widget class="QLineEdit" name="remate">
+    <widget class="QLineEdit" name="lremate">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -707,7 +708,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="groupBox">
+   <widget class="QGroupBox" name="porcentajes">
     <property name="geometry">
      <rect>
       <x>240</x>
@@ -719,7 +720,7 @@
     <property name="title">
      <string>Porcentaje</string>
     </property>
-    <widget class="QRadioButton" name="radioButton">
+    <widget class="QRadioButton" name="diezP">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -746,7 +747,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QRadioButton" name="radioButton_2">
+    <widget class="QRadioButton" name="veinteP">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -773,7 +774,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QRadioButton" name="radioButton_3">
+    <widget class="QRadioButton" name="treintaP">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -801,7 +802,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="groupBox_4">
+   <widget class="QGroupBox" name="bsubtotales">
     <property name="geometry">
      <rect>
       <x>340</x>
@@ -813,7 +814,7 @@
     <property name="title">
      <string>Subtotales</string>
     </property>
-    <widget class="QTextBrowser" name="textBrowser">
+    <widget class="QTextBrowser" name="subtotales">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -835,6 +836,39 @@ p, li { white-space: pre-wrap; }
      </property>
     </widget>
    </widget>
+   <widget class="QGroupBox" name="bhistorial">
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>170</y>
+      <width>351</width>
+      <height>401</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Historial de Carga</string>
+    </property>
+    <widget class="QWidget" name="whistorial" native="true">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>331</width>
+       <height>371</height>
+      </rect>
+     </property>
+     <widget class="QTextBrowser" name="pdfHistorial">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>331</width>
+        <height>371</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -847,12 +881,31 @@ p, li { white-space: pre-wrap; }
    </property>
    <widget class="QMenu" name="menuMen">
     <property name="title">
-     <string>Menú</string>
+     <string>Parámetros</string>
     </property>
     <addaction name="actionReuniones"/>
     <addaction name="actionCarreras"/>
+    <addaction name="actionSalir"/>
+   </widget>
+   <widget class="QMenu" name="menuAcciones">
+    <property name="title">
+     <string>Impresiones</string>
+    </property>
+    <addaction name="actionImprimir_remates"/>
+    <addaction name="actionImprimir_Carrera"/>
+    <addaction name="actionImprimir_Reuni_n"/>
+   </widget>
+   <widget class="QMenu" name="menuEdici_n">
+    <property name="title">
+     <string>Edición</string>
+    </property>
+    <addaction name="actionEditar_Remate"/>
+    <addaction name="actionEliminar_Caballo"/>
+    <addaction name="actionEliminar_Carrera"/>
    </widget>
    <addaction name="menuMen"/>
+   <addaction name="menuAcciones"/>
+   <addaction name="menuEdici_n"/>
   </widget>
   <action name="actionReuniones">
    <property name="text">
@@ -874,7 +927,68 @@ p, li { white-space: pre-wrap; }
     <string>Caballos</string>
    </property>
   </action>
+  <action name="actionImprimir_remates">
+   <property name="text">
+    <string>Imprimir Remate</string>
+   </property>
+  </action>
+  <action name="actionImprimir_Carrera">
+   <property name="text">
+    <string>Imprimir Carrera</string>
+   </property>
+  </action>
+  <action name="actionImprimir_Reuni_n">
+   <property name="text">
+    <string>Imprimir Reunión</string>
+   </property>
+  </action>
+  <action name="actionEditar_Remate">
+   <property name="text">
+    <string>Editar Remate</string>
+   </property>
+  </action>
+  <action name="actionEliminar_Caballo">
+   <property name="text">
+    <string>Eliminar Caballo</string>
+   </property>
+  </action>
+  <action name="actionEliminar_Carrera">
+   <property name="text">
+    <string>Eliminar Carrera</string>
+   </property>
+  </action>
+  <action name="actionSalir">
+   <property name="text">
+    <string>Salir</string>
+   </property>
+  </action>
  </widget>
+ <tabstops>
+  <tabstop>lremate</tabstop>
+  <tabstop>uno</tabstop>
+  <tabstop>dos</tabstop>
+  <tabstop>tres</tabstop>
+  <tabstop>cuatro</tabstop>
+  <tabstop>cinco</tabstop>
+  <tabstop>seis</tabstop>
+  <tabstop>siete</tabstop>
+  <tabstop>ocho</tabstop>
+  <tabstop>nueve</tabstop>
+  <tabstop>diez</tabstop>
+  <tabstop>once</tabstop>
+  <tabstop>doce</tabstop>
+  <tabstop>trece</tabstop>
+  <tabstop>catorce</tabstop>
+  <tabstop>quince</tabstop>
+  <tabstop>dieciseis</tabstop>
+  <tabstop>guardar</tabstop>
+  <tabstop>descartar</tabstop>
+  <tabstop>diezP</tabstop>
+  <tabstop>veinteP</tabstop>
+  <tabstop>treintaP</tabstop>
+  <tabstop>subtotales</tabstop>
+  <tabstop>pdfHistorial</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
