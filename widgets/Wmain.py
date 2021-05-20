@@ -427,9 +427,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
             event.ignore()
 
     def selecReunion(self):
-        if self.wReunion is None:
-            self.wReunion = Wreunion()
-        self.wReunion.show()
+        pass
+        #maybe dialog ?
+        #if self.wReunion is None:
+        #    self.wReunion = Wreunion()
+        #self.wReunion.show()
 
     def selecCarrera(self):
         if self.wCarrera is None:

@@ -13,6 +13,7 @@ import sys
 sys.path.append("./")
 import utils
 import datetime
+from widgets.Singleton import *
 
 
 #WidgetReunion
@@ -21,8 +22,7 @@ class Wreunion(QtWidgets.QWidget):
         super().__init__()
         self.setupUi(self)
 
-    #Atributos
-    idReunion = None
+    db = Singleton()
 
     def setupUi(self, reunionW):
         reunionW.setObjectName("reunionW")
@@ -88,7 +88,7 @@ class Wreunion(QtWidgets.QWidget):
         sess.execute("INSERT INTO reunion(id, fecha) VALUES (:val, :par)", {'val' : nrnn, 'par' : fec})
         sess.commit()
         sess.close()
-        self.idReunion = nrnn
+        self.db.reunion = nrnn
         self.goCarrera()
 
     def listaReunion(self):
@@ -107,8 +107,7 @@ class Wreunion(QtWidgets.QWidget):
 
     def seleccion(self, text):
         sess = utils.bd()
-        self.idReunion = sess.execute("SELECT id FROM reunion WHERE fecha=:val", {'val' : text}).scalar()
-        print(self.idReunion)
+        self.db.reunion = sess.execute("SELECT id FROM reunion WHERE fecha=:val", {'val' : text}).scalar()
         sess.close()
 
 
@@ -124,10 +123,11 @@ class Wcarrera(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        print(Singleton.reunion)
 
     #Atributos
-    nroReunion = Wreunion.idReunion
-    idCarrera = None
+    nroReunion = Singleton.reunion
+    db = Singleton()
 
     def setupUi(self, carreraW):
 
@@ -188,8 +188,8 @@ class Wcarrera(QtWidgets.QWidget):
     def creaCarrera(self):
         sess = utils.bd()
         ncrr = sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.nroReunion}).scalar() + 1
-        self.idCarrera = sess.execute("SELECT COUNT(*) FROM carrera").scalar() + 1
-        sess.execute("INSERT INTO carrera(id, idReunion, numero) VALUES (:val, :par, :var)", {'val' : self.idCarrera, 'par' : self.nroReunion, 'var' : ncrr})
+        self.db.carrera = sess.execute("SELECT COUNT(*) FROM carrera").scalar() + 1
+        sess.execute("INSERT INTO carrera(id, idReunion, numero) VALUES (:val, :par, :var)", {'val' : self.db.carrera, 'par' : self.nroReunion, 'var' : ncrr})
         sess.commit()
         sess.close()
 
@@ -199,7 +199,7 @@ class Wcarrera(QtWidgets.QWidget):
         combo = QtWidgets.QComboBox(self)
         combo.setPlaceholderText("None")
         while(0<j):
-            query = sess.execute("SELECT * FROM carrera WHERE idReunion = :val", {'val' : j})
+            query = sess.execute("SELECT * FROM carrera WHERE id = :val", {'val' : j})
             query = query.fetchone()
             carNum = query['numero']
             combo.addItem(carNum)
@@ -209,7 +209,7 @@ class Wcarrera(QtWidgets.QWidget):
 
     def seleccion(self, text):
         sess = utils.bd()
-        self.idCarrera = sess.execute("SELECT id FROM carrera WHERE idReunion = :val AND numero=:par", {'val' : self.nroReunion, 'par' : text}).scalar()
+        self.db.carrera = sess.execute("SELECT id FROM carrera WHERE idReunion = :val AND numero=:par", {'val' : self.nroReunion, 'par' : text}).scalar()
         sess.close()
 
 
