@@ -2,12 +2,14 @@ import sys
 sys.path.append("./")
 from PyQt5 import QtCore, QtGui, QtWidgets
 import utils
+import datetime
 
 
 class Ui_MainWindow(QtWidgets.QWidget):
     idReunion = None
     idCarrera = None
     nroCarrera = None
+    cantCaballos = None
     
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -18,78 +20,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         #Box de Carga
-        self.bcarga = QtWidgets.QGroupBox(self.centralwidget)
-        self.bcarga.setGeometry(QtCore.QRect(10, 10, 221, 561))
-        self.bcarga.setTitle("")
-        self.bcarga.setObjectName("bcarga")
-        #Lineas
-        self.lines = []
-        i = 0
-        h = 40
-        while(i<16):
-            self.lines.append(QtWidgets.QLineEdit(self.bcarga))
-            self.lines[i].setGeometry(QtCore.QRect(110, h, 101, 20))
-            self.lines[i].setObjectName('line{}'.format(i))
-            self.lines[i].setValidator(QtGui.QIntValidator())
-            i+=1
-            h+=30
-        #Labels
-        font = QtGui.QFont()
-        font.setFamily("Verdana")
-        font.setPointSize(12)
-        font.setBold(True)
-        font.setWeight(75)
-        self.labels = []
-        k = 0
-        l = 40
-        while(k<16):
-            self.labels.append(QtWidgets.QLabel(self.bcarga))
-            self.labels[k].setFont(font)
-            if(k<9):
-                self.labels[k].setGeometry(QtCore.QRect(80, l, 16, 16))
-            else:
-                self.labels[k].setGeometry(QtCore.QRect(70, l, 22, 16))
-            self.labels[k].setObjectName("c"+str(k))
-            k+=1
-            l+=30
         
-        self.caballos = QtWidgets.QLabel(self.bcarga)
-        self.caballos.setGeometry(QtCore.QRect(10, 10, 81, 21))
-        self.caballos.setFont(font)
-        self.caballos.setObjectName("caballos")
-
-        self.montos = QtWidgets.QLabel(self.bcarga)
-        self.montos.setGeometry(QtCore.QRect(120, 10, 71, 21))
-        self.montos.setFont(font)
-        self.montos.setObjectName("montos")
-
-        #Deco
-        self.line = QtWidgets.QFrame(self.bcarga)
-        self.line.setGeometry(QtCore.QRect(90, 0, 20, 520))
-        self.line.setFrameShape(QtWidgets.QFrame.VLine)
-        self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.line.setObjectName("line")
-        self.line_2 = QtWidgets.QFrame(self.bcarga)
-        self.line_2.setGeometry(QtCore.QRect(0, 510, 221, 20))
-        self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
-        self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.line_2.setObjectName("line_2")
-        #Boton Descartar
-        self.descartar = QtWidgets.QPushButton(self.bcarga)
-        self.descartar.setGeometry(QtCore.QRect(0, 530, 101, 31))
-        font = QtGui.QFont()
-        font.setWeight(50)
-        self.descartar.setFont(font)
-        self.descartar.setObjectName("descartar")
-        self.descartar.clicked.connect()
-        #Boton Guardar
-        self.guardar = QtWidgets.QPushButton(self.bcarga)
-        self.guardar.setGeometry(QtCore.QRect(110, 530, 101, 31))
-        font = QtGui.QFont()
-        font.setBold(True)
-        font.setWeight(75)
-        self.guardar.setFont(font)
-        self.guardar.setObjectName("guardar")
         #Box Carrera
         self.bcarrera = QtWidgets.QGroupBox(self.centralwidget)
         self.bcarrera.setGeometry(QtCore.QRect(490, 0, 101, 51))
@@ -168,20 +99,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuEdicion.setObjectName("menuEdicion")
         MainWindow.setMenuBar(self.menuBar)
         #Action Reunion
-        self.wReunion = None
         self.actionReuniones = QtWidgets.QAction(MainWindow)
         self.actionReuniones.setObjectName("actionReuniones")
         self.actionReuniones.triggered.connect(self.dialogRyC)
         #Action Carrera
-        self.wCarrera = None
         self.actionCarreras = QtWidgets.QAction(MainWindow)
         self.actionCarreras.setObjectName("actionCarreras")
         self.actionCarreras.triggered.connect(self.dialogRyC)
-        
-        
 
         self.actionCaballos = QtWidgets.QAction(MainWindow)
         self.actionCaballos.setObjectName("actionCaballos")
+        self.actionCaballos.triggered.connect(self.horses)
 
         self.actionImprimir_remates = QtWidgets.QAction(MainWindow)
         self.actionImprimir_remates.setObjectName("actionImprimir_remates")
@@ -200,6 +128,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionSalir.triggered.connect(self.close)
         self.menuMen.addAction(self.actionReuniones)
         self.menuMen.addAction(self.actionCarreras)
+        self.menuMen.addAction(self.actionCaballos)
         self.menuMen.addAction(self.actionSalir)
         self.menuAcciones.addAction(self.actionImprimir_remates)
         self.menuAcciones.addAction(self.actionImprimir_Carrera)
@@ -213,21 +142,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
-        MainWindow.setTabOrder(self.guardar, self.descartar)
         
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        m=0
-        while(m<len(self.labels)):
-            self.labels[m].setText(_translate("MainWindow", str(m+1)))
-            m+=1
-
-        self.montos.setText(_translate("MainWindow", "Montos"))
-        self.caballos.setText(_translate("MainWindow", "Caballos"))  
-        self.descartar.setText(_translate("MainWindow", "Descartar"))
-        self.guardar.setText(_translate("MainWindow", "Guardar"))
         self.bcarrera.setTitle(_translate("MainWindow", "Carrera"))
         self.xy.setText(_translate("MainWindow", str(self.nroCarrera)))
         self.bremate.setTitle(_translate("MainWindow", "Remate "))
@@ -259,6 +178,18 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionEliminar_Caballo.setText(_translate("MainWindow", "Eliminar Caballo"))
         self.actionEliminar_Carrera.setText(_translate("MainWindow", "Eliminar Carrera"))
         self.actionSalir.setText(_translate("MainWindow", "Salir"))
+
+    def retranslate_2(self):
+        _translate = QtCore.QCoreApplication.translate
+        m=0
+        while(m<len(self.labels)):
+            self.labels[m].setText(_translate("SubWidget", str(m+1)))
+            m+=1
+
+        self.montos.setText(_translate("SubWidget", "Montos"))
+        self.caballos.setText(_translate("SubWidget", "Caballos"))  
+        self.descartar.setText(_translate("SubWidget", "Descartar"))
+        self.guardar.setText(_translate("SubWidget", "Guardar"))
 
     #Metodos
     def closeEvent(self, event):
@@ -349,5 +280,121 @@ class Ui_MainWindow(QtWidgets.QWidget):
         else:
             self.idCarrera = sess.execute("SELECT id FROM carrera WHERE idReunion = :val AND numero=:par", {'val' : self.idReunion, 'par' : text}).scalar()
         sess.close()
+
+    def horses(self):
+        self.cabs = QtWidgets.QDialog()
+        self.cabs.resize(270, 90)
+        self.cabs.setMinimumSize(QtCore.QSize(270, 90))
+        self.cabs.setMaximumSize(QtCore.QSize(270, 90))
+        self.labelCab = QtWidgets.QLabel(self.cabs)
+        self.labelCab.setGeometry(QtCore.QRect(30, 10, 260, 30))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.labelCab.setFont(font)
+        self.labelCab.setObjectName("labelCab")
+        self.labelCab.setText("Cantidad de caballos en carrera")
+        self.lineCab = QtWidgets.QLineEdit(self.cabs)
+        self.lineCab.setGeometry(QtCore.QRect(130, 40, 40, 20))
+        self.lineCab.setObjectName("labelCab")
+        self.lineCab.setValidator(QtGui.QIntValidator())
+        self.lineCab.returnPressed.connect(self.setCabs)
+        self.lineCab.returnPressed.connect(self.cabs.close)
+        self.lineCab.returnPressed.connect(self.showCaja)
+        self.cabs.exec_()
+
+    def setCabs(self):
+        self.cantCaballos = self.lineCab.text()
+
+    def boxCarga(self):
+        self.caja = QtWidgets.QGroupBox(self.centralwidget)
+        self.caja.setGeometry(QtCore.QRect(10, 10, 221, 561))
+        self.caja.setTitle("")
+        self.caja.setObjectName("bcarga")
+        #Lineas
+        self.lines = []
+        i = 0
+        h = 40
+        while(i<int(self.cantCaballos)):
+            self.lines.append(QtWidgets.QLineEdit(self.caja))
+            self.lines[i].setGeometry(QtCore.QRect(110, h, 101, 20))
+            self.lines[i].setObjectName('line{}'.format(i))
+            self.lines[i].setValidator(QtGui.QIntValidator())
+            i+=1
+            h+=30
+        #Labels
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        font.setBold(True)
+        font.setWeight(75)
+        self.labels = []
+        k = 0
+        l = 40
+        while(k<int(self.cantCaballos)):
+            self.labels.append(QtWidgets.QLabel(self.caja))
+            self.labels[k].setFont(font)
+            if(k<9):
+                self.labels[k].setGeometry(QtCore.QRect(80, l, 16, 16))
+            else:
+                self.labels[k].setGeometry(QtCore.QRect(70, l, 22, 16))
+            self.labels[k].setObjectName("c"+str(k))
+            k+=1
+            l+=30
+        
+        self.caballos = QtWidgets.QLabel(self.caja)
+        self.caballos.setGeometry(QtCore.QRect(10, 10, 81, 21))
+        self.caballos.setFont(font)
+        self.caballos.setObjectName("caballos")
+
+        self.montos = QtWidgets.QLabel(self.caja)
+        self.montos.setGeometry(QtCore.QRect(120, 10, 71, 21))
+        self.montos.setFont(font)
+        self.montos.setObjectName("montos")
+
+        #Deco
+        self.line = QtWidgets.QFrame(self.caja)
+        self.line.setGeometry(QtCore.QRect(90, 0, 20, 520))
+        self.line.setFrameShape(QtWidgets.QFrame.VLine)
+        self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line.setObjectName("line")
+        self.line_2 = QtWidgets.QFrame(self.caja)
+        self.line_2.setGeometry(QtCore.QRect(0, 510, 221, 20))
+        self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line_2.setObjectName("line_2")
+        #Boton Descartar
+        self.descartar = QtWidgets.QPushButton(self.caja)
+        self.descartar.setGeometry(QtCore.QRect(0, 530, 101, 31))
+        font = QtGui.QFont()
+        font.setWeight(50)
+        self.descartar.setFont(font)
+        self.descartar.setObjectName("descartar")
+        self.descartar.clicked.connect(self.clearAll)
+        #Boton Guardar
+        self.guardar = QtWidgets.QPushButton(self.caja)
+        self.guardar.setGeometry(QtCore.QRect(110, 530, 101, 31))
+        font = QtGui.QFont()
+        font.setBold(True)
+        font.setWeight(75)
+        self.guardar.setFont(font)
+        self.guardar.setObjectName("guardar")
+        self.guardar.clicked.connect(self.caja.hide)
+        
+        self.retranslate_2()
+        QtCore.QMetaObject.connectSlotsByName(self.caja)
+        self.caja.setTabOrder(self.guardar, self.descartar)
+        return self.caja
+
+
+    def showCaja(self):
+        self.cajaCarga = self.boxCarga()
+        self.cajaCarga.show()
+
+    def clearAll(self, checked=False):
+        for field in self.lines:
+            field.clear()
 
     
