@@ -10,6 +10,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
     idCarrera = None
     nroCarrera = None
     cantCaballos = None
+    idRemate = None
+    nroRemate = None
     
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -19,7 +21,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         MainWindow.setTabShape(QtWidgets.QTabWidget.Rounded)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
-        #Box de Carga
         
         #Box Carrera
         self.bcarrera = QtWidgets.QGroupBox(self.centralwidget)
@@ -148,7 +149,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.bcarrera.setTitle(_translate("MainWindow", "Carrera"))
-        self.xy.setText(_translate("MainWindow", str(self.nroCarrera)))
         self.bremate.setTitle(_translate("MainWindow", "Remate "))
         self.porcentajes.setTitle(_translate("MainWindow", "Porcentaje"))
         self.diezP.setText(_translate("MainWindow", "10%"))
@@ -279,6 +279,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.idReunion = sess.execute("SELECT id FROM reunion WHERE fecha=:val", {'val' : text}).scalar()
         else:
             self.idCarrera = sess.execute("SELECT id FROM carrera WHERE idReunion = :val AND numero=:par", {'val' : self.idReunion, 'par' : text}).scalar()
+            self.nroCarrera = sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).scalar()
         sess.close()
 
     def horses(self):
@@ -303,10 +304,24 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.lineCab.returnPressed.connect(self.setCabs)
         self.lineCab.returnPressed.connect(self.cabs.close)
         self.lineCab.returnPressed.connect(self.showCaja)
+        self.lineCab.returnPressed.connect(self.xycar)
         self.cabs.exec_()
 
+    def xycar(self):
+        self.xy.setText(str(self.nroCarrera))
+
     def setCabs(self):
-        self.cantCaballos = self.lineCab.text()
+        self.cantCaballos = int(self.lineCab.text())
+        sess = utils.bd()
+        sess.execute("UPDATE carrera SET cantCaballos = :cab WHERE id = :reu", {'cab' : self.cantCaballos, 'reu' : self.idCarrera})
+        sess.commit()
+        sess.close()
+        if(self.cantCaballos==2):
+            self.diezP.setChecked(True)
+        elif(self.cantCaballos==3):
+            self.veinteP.setChecked(True)
+        else:
+            self.treintaP.setChecked(True)
 
     def boxCarga(self):
         self.caja = QtWidgets.QGroupBox(self.centralwidget)
@@ -381,13 +396,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         font.setWeight(75)
         self.guardar.setFont(font)
         self.guardar.setObjectName("guardar")
-        self.guardar.clicked.connect(self.caja.hide)
-        
+        self.guardar.clicked.connect(self.save)
+        self.guardar.clicked.connect(self.clearAll)
         self.retranslate_2()
         QtCore.QMetaObject.connectSlotsByName(self.caja)
         self.caja.setTabOrder(self.guardar, self.descartar)
         return self.caja
-
 
     def showCaja(self):
         self.cajaCarga = self.boxCarga()
@@ -396,5 +410,37 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def clearAll(self, checked=False):
         for field in self.lines:
             field.clear()
+
+    def save(self,):
+        i = 1
+        sess = utils.bd()
+        self.idRemate = sess.execute("SELECT COUNT(*) FROM remate").scalar() + 1
+        self.nroRemate = int(self.lremate.text())
+        if(self.diezP.isChecked()):
+            porc = 0.1
+        if(self.veinteP.isChecked()):
+            porc = 0.2
+        if(self.treintaP.isChecked()):
+            porc = 0.3
+        sess.execute("INSERT INTO remate(id, idCarrera, numero, porcentaje) VALUES (:val, :par, :var, :car)", {'val' : self.idRemate, 'par' : self.idCarrera, 'var' : self.nroRemate, 'car' : porc})
+        for it in self.lines:
+            self.rmt = it.text()
+            if(self.rmt == ""):
+                self.rmt = 0
+            else:
+                self.rmt = int(self.rmt)
+            self.idCaballo = sess.execute("SELECT COUNT(*) FROM caballo").scalar() + 1
+            sess.execute("INSERT INTO caballo(id, idCarrera, idRemate, numero, monto) VALUES (:val, :par, :rem, :var, :car)", {'val' : self.idCaballo, 'par' : self.idCarrera, 'rem' : self.idRemate, 'var' : i, 'car' : self.rmt})
+            sess.commit()
+            i+=1
+        total = sess.execute("SELECT SUM(monto) FROM caballo WHERE idRemate = :var", {'var' : self.idRemate}).scalar()
+        sess.execute("UPDATE remate SET total = :tot WHERE id = :rem", {'tot' : total, 'rem' : self.idRemate})
+        sess.commit()
+        sess.close()
+        self.lremate.setText(str(self.nroRemate + 1))
+
+
+
+
 
     
