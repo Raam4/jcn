@@ -4,14 +4,23 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import utils
 import datetime
 
-
 class Ui_MainWindow(QtWidgets.QWidget):
-    idReunion = None
     idCarrera = None
     nroCarrera = None
     cantCaballos = None
     idRemate = None
     nroRemate = None
+    cajaCarga = None
+    sess = utils.bd()
+    fec = datetime.date.today()
+    try:
+        idReunion = sess.execute("SELECT COUNT(*) FROM reunion").scalar() + 1
+        sess.execute("INSERT INTO reunion(id, fecha) VALUES (:val, :par)", {'val' : idReunion, 'par' : fec})
+        sess.commit()
+        sess.close()
+    except:
+        idReunion = sess.execute("SELECT id FROM reunion WHERE fecha = :var", {'var' : fec}).scalar()
+        sess.close()
     
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -21,7 +30,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         MainWindow.setTabShape(QtWidgets.QTabWidget.Rounded)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
-        
         #Box Carrera
         self.bcarrera = QtWidgets.QGroupBox(self.centralwidget)
         self.bcarrera.setGeometry(QtCore.QRect(490, 0, 101, 51))
@@ -99,10 +107,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuEdicion = QtWidgets.QMenu(self.menuBar)
         self.menuEdicion.setObjectName("menuEdicion")
         MainWindow.setMenuBar(self.menuBar)
-        #Action Reunion
-        self.actionReuniones = QtWidgets.QAction(MainWindow)
-        self.actionReuniones.setObjectName("actionReuniones")
-        self.actionReuniones.triggered.connect(self.dialogRyC)
         #Action Carrera
         self.actionCarreras = QtWidgets.QAction(MainWindow)
         self.actionCarreras.setObjectName("actionCarreras")
@@ -127,7 +131,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionSalir = QtWidgets.QAction(MainWindow)
         self.actionSalir.setObjectName("actionSalir")
         self.actionSalir.triggered.connect(self.close)
-        self.menuMen.addAction(self.actionReuniones)
         self.menuMen.addAction(self.actionCarreras)
         self.menuMen.addAction(self.actionCaballos)
         self.menuMen.addAction(self.actionSalir)
@@ -168,7 +171,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuMen.setTitle(_translate("MainWindow", "Parámetros"))
         self.menuAcciones.setTitle(_translate("MainWindow", "Impresiones"))
         self.menuEdicion.setTitle(_translate("MainWindow", "Edición"))
-        self.actionReuniones.setText(_translate("MainWindow", "Seleccionar Reunión"))
         self.actionCarreras.setText(_translate("MainWindow", "Seleccionar Carrera"))
         self.actionCaballos.setText(_translate("MainWindow", "Caballos"))
         self.actionImprimir_remates.setText(_translate("MainWindow", "Imprimir Remate"))
@@ -185,7 +187,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         while(m<len(self.labels)):
             self.labels[m].setText(_translate("SubWidget", str(m+1)))
             m+=1
-
         self.montos.setText(_translate("SubWidget", "Montos"))
         self.caballos.setText(_translate("SubWidget", "Caballos"))  
         self.descartar.setText(_translate("SubWidget", "Descartar"))
@@ -228,59 +229,36 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.creaB.setText("Crear")
         self.creaB.clicked.connect(self.crear)
         self.creaB.clicked.connect(self.dlg.close)
-
-        sess = utils.bd()
-        if(self.idReunion is None):
-            self.d1.setText("Seleccionar Reunión")
-            self.d2.setText("Crear Reunión")
-            i = sess.execute("SELECT COUNT(*) FROM reunion").scalar()
-        else:
-            self.d1.setText("Seleccionar Carrera")
-            self.d2.setText("Crear Carrera")
-            i = sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).scalar()
+        self.d1.setText("Seleccionar Carrera")
+        self.d2.setText("Crear Carrera")
+        i = self.sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).scalar()
         
         self.combo = QtWidgets.QComboBox(self.dlg)
         self.combo.setGeometry(60, 50, 90, 23)
         self.combo.setPlaceholderText("None")
 
         while(0<i):
-            if(self.idReunion is None):
-                query = sess.execute("SELECT * FROM reunion WHERE id = :val", {'val' : i})
-                res = query.fetchone()
-                wanted = res['fecha']
-            else:
-                query = sess.execute("SELECT * FROM carrera WHERE id = :val", {'val' : i})
-                res = query.fetchone()
-                wanted = str(res['numero'])
+            query = self.sess.execute("SELECT * FROM carrera WHERE id = :val", {'val' : i})
+            res = query.fetchone()
+            wanted = str(res['numero'])
             self.combo.addItem(wanted)
             i-=1
-        sess.close()
+        self.sess.close()
         self.combo.activated[str].connect(self.seleccion)
         self.combo.activated.connect(self.dlg.close)
         self.dlg.exec_()
 
     def crear(self):
-        sess = utils.bd()
-        fec = datetime.date.today()
-        if(self.idReunion is None):
-            self.idReunion = sess.execute("SELECT COUNT(*) FROM reunion").scalar() + 1
-            sess.execute("INSERT INTO reunion(id, fecha) VALUES (:val, :par)", {'val' : self.idReunion, 'par' : fec})
-            sess.commit()
-        else:
-            self.nroCarrera = sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).scalar() + 1
-            self.idCarrera = sess.execute("SELECT COUNT(*) FROM carrera").scalar() + 1
-            sess.execute("INSERT INTO carrera(id, idReunion, numero) VALUES (:val, :par, :var)", {'val' : self.idCarrera, 'par' : self.idReunion, 'var' : self.nroCarrera})
-            sess.commit()
-        sess.close()
+        self.nroCarrera = self.sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).scalar() + 1
+        self.idCarrera = self.sess.execute("SELECT COUNT(*) FROM carrera").scalar() + 1
+        self.sess.execute("INSERT INTO carrera(id, idReunion, numero) VALUES (:val, :par, :var)", {'val' : self.idCarrera, 'par' : self.idReunion, 'var' : self.nroCarrera})
+        self.sess.commit()
+        self.sess.close()
 
     def seleccion(self, text):
-        sess = utils.bd()
-        if(self.idReunion is None):
-            self.idReunion = sess.execute("SELECT id FROM reunion WHERE fecha=:val", {'val' : text}).scalar()
-        else:
-            self.idCarrera = sess.execute("SELECT id FROM carrera WHERE idReunion = :val AND numero=:par", {'val' : self.idReunion, 'par' : text}).scalar()
-            self.nroCarrera = sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).scalar()
-        sess.close()
+        self.idCarrera = self.sess.execute("SELECT id FROM carrera WHERE idReunion = :val AND numero=:par", {'val' : self.idReunion, 'par' : text}).scalar()
+        self.nroCarrera = self.sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).scalar()
+        self.sess.close()
 
     def horses(self):
         self.cabs = QtWidgets.QDialog()
@@ -304,7 +282,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.lineCab.returnPressed.connect(self.setCabs)
         self.lineCab.returnPressed.connect(self.cabs.close)
         self.lineCab.returnPressed.connect(self.showCaja)
-        self.lineCab.returnPressed.connect(self.xycar)
         self.cabs.exec_()
 
     def xycar(self):
@@ -322,6 +299,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.veinteP.setChecked(True)
         else:
             self.treintaP.setChecked(True)
+        
 
     def boxCarga(self):
         self.caja = QtWidgets.QGroupBox(self.centralwidget)
@@ -404,6 +382,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         return self.caja
 
     def showCaja(self):
+        if(self.cajaCarga is not None):
+            self.cajaCarga.close()
         self.cajaCarga = self.boxCarga()
         self.cajaCarga.show()
 
@@ -439,8 +419,3 @@ class Ui_MainWindow(QtWidgets.QWidget):
         sess.close()
         self.lremate.setText(str(self.nroRemate + 1))
 
-
-
-
-
-    
