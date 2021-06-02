@@ -23,7 +23,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         sess.close()
     
     def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
+        MainWindow.setObjectName("Remates JCN")
         MainWindow.resize(600, 600)
         MainWindow.setMinimumSize(QtCore.QSize(600, 600))
         MainWindow.setMaximumSize(QtCore.QSize(600, 600))
@@ -110,7 +110,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         #Action Carrera
         self.actionCarreras = QtWidgets.QAction(MainWindow)
         self.actionCarreras.setObjectName("actionCarreras")
-        self.actionCarreras.triggered.connect(self.dialogRyC)
+        self.actionCarreras.triggered.connect(self.dialogCarrera)
 
         self.actionCaballos = QtWidgets.QAction(MainWindow)
         self.actionCaballos.setObjectName("actionCaballos")
@@ -150,15 +150,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.bcarrera.setTitle(_translate("MainWindow", "Carrera"))
-        self.bremate.setTitle(_translate("MainWindow", "Remate "))
-        self.porcentajes.setTitle(_translate("MainWindow", "Porcentaje"))
-        self.diezP.setText(_translate("MainWindow", "10%"))
-        self.veinteP.setText(_translate("MainWindow", "20%"))
-        self.treintaP.setText(_translate("MainWindow", "30%"))
-        self.bsubtotales.setTitle(_translate("MainWindow", "Subtotales"))
-        self.subtotales.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+        MainWindow.setWindowTitle(_translate("Remates JCN", "Remates JCN"))
+        self.bcarrera.setTitle(_translate("Remates JCN", "Carrera"))
+        self.bremate.setTitle(_translate("Remates JCN", "Remate "))
+        self.porcentajes.setTitle(_translate("Remates JCN", "Porcentaje"))
+        self.diezP.setText(_translate("Remates JCN", "10%"))
+        self.veinteP.setText(_translate("Remates JCN", "20%"))
+        self.treintaP.setText(_translate("Remates JCN", "30%"))
+        self.bsubtotales.setTitle(_translate("Remates JCN", "Subtotales"))
+        self.subtotales.setHtml(_translate("Remates JCN", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
@@ -167,19 +167,19 @@ class Ui_MainWindow(QtWidgets.QWidget):
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:9pt; font-weight:600;\">A Pagar        $var</span></p>\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt; font-weight:600;\"><br /></p>\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:9pt; font-weight:600;\">A Rendir        $var</span></p></body></html>"))
-        self.bhistorial.setTitle(_translate("MainWindow", "Historial de Carga"))
-        self.menuMen.setTitle(_translate("MainWindow", "Parámetros"))
-        self.menuAcciones.setTitle(_translate("MainWindow", "Impresiones"))
-        self.menuEdicion.setTitle(_translate("MainWindow", "Edición"))
-        self.actionCarreras.setText(_translate("MainWindow", "Seleccionar Carrera"))
-        self.actionCaballos.setText(_translate("MainWindow", "Caballos"))
-        self.actionImprimir_remates.setText(_translate("MainWindow", "Imprimir Remate"))
-        self.actionImprimir_Carrera.setText(_translate("MainWindow", "Imprimir Carrera"))
-        self.actionImprimir_Reunion.setText(_translate("MainWindow", "Imprimir Reunión"))
-        self.actionEditar_Remate.setText(_translate("MainWindow", "Editar Remate"))
-        self.actionEliminar_Caballo.setText(_translate("MainWindow", "Eliminar Caballo"))
-        self.actionEliminar_Carrera.setText(_translate("MainWindow", "Eliminar Carrera"))
-        self.actionSalir.setText(_translate("MainWindow", "Salir"))
+        self.bhistorial.setTitle(_translate("Remates JCN", "Historial de Carga"))
+        self.menuMen.setTitle(_translate("Remates JCN", "Parámetros"))
+        self.menuAcciones.setTitle(_translate("Remates JCN", "Impresiones"))
+        self.menuEdicion.setTitle(_translate("Remates JCN", "Edición"))
+        self.actionCarreras.setText(_translate("Remates JCN", "Seleccionar Carrera"))
+        self.actionCaballos.setText(_translate("Remates JCN", "Caballos"))
+        self.actionImprimir_remates.setText(_translate("Remates JCN", "Imprimir Remate"))
+        self.actionImprimir_Carrera.setText(_translate("Remates JCN", "Imprimir Carrera"))
+        self.actionImprimir_Reunion.setText(_translate("Remates JCN", "Imprimir Reunión"))
+        self.actionEditar_Remate.setText(_translate("Remates JCN", "Editar Remate"))
+        self.actionEliminar_Caballo.setText(_translate("Remates JCN", "Eliminar Caballo"))
+        self.actionEliminar_Carrera.setText(_translate("Remates JCN", "Eliminar Carrera"))
+        self.actionSalir.setText(_translate("Remates JCN", "Salir"))
 
     def retranslate_2(self):
         _translate = QtCore.QCoreApplication.translate
@@ -200,7 +200,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         else:
             event.ignore()
 
-    def dialogRyC(self):
+    def dialogCarrera(self):
         self.dlg = QtWidgets.QDialog()
         self.dlg.resize(372, 102)
         self.d1 = QtWidgets.QLabel(self.dlg)
@@ -232,11 +232,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.d1.setText("Seleccionar Carrera")
         self.d2.setText("Crear Carrera")
         i = self.sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).scalar()
-        
         self.combo = QtWidgets.QComboBox(self.dlg)
         self.combo.setGeometry(60, 50, 90, 23)
         self.combo.setPlaceholderText("None")
-
         while(0<i):
             query = self.sess.execute("SELECT * FROM carrera WHERE id = :val", {'val' : i})
             res = query.fetchone()
@@ -254,11 +252,20 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.sess.execute("INSERT INTO carrera(id, idReunion, numero) VALUES (:val, :par, :var)", {'val' : self.idCarrera, 'par' : self.idReunion, 'var' : self.nroCarrera})
         self.sess.commit()
         self.sess.close()
+        self.horses()
+        self.xy.setText(str(self.nroCarrera))
 
     def seleccion(self, text):
         self.idCarrera = self.sess.execute("SELECT id FROM carrera WHERE idReunion = :val AND numero=:par", {'val' : self.idReunion, 'par' : text}).scalar()
-        self.nroCarrera = self.sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).scalar()
+        self.nroCarrera = int(text)
+        try:
+            self.cantCaballos = self.sess.execute("SELECT cantCaballos FROM carrera WHERE id = :id", {'id' : self.idCarrera}).scalar()
+            self.showCaja()
+            self.setPorcentaje()
+        except:
+            self.horses()
         self.sess.close()
+        self.xy.setText(str(self.nroCarrera))
 
     def horses(self):
         self.cabs = QtWidgets.QDialog()
@@ -284,15 +291,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.lineCab.returnPressed.connect(self.showCaja)
         self.cabs.exec_()
 
-    def xycar(self):
-        self.xy.setText(str(self.nroCarrera))
-
     def setCabs(self):
         self.cantCaballos = int(self.lineCab.text())
         sess = utils.bd()
         sess.execute("UPDATE carrera SET cantCaballos = :cab WHERE id = :reu", {'cab' : self.cantCaballos, 'reu' : self.idCarrera})
         sess.commit()
         sess.close()
+        self.setPorcentaje()
+
+    def setPorcentaje(self):
         if(self.cantCaballos==2):
             self.diezP.setChecked(True)
         elif(self.cantCaballos==3):
@@ -374,11 +381,16 @@ class Ui_MainWindow(QtWidgets.QWidget):
         font.setWeight(75)
         self.guardar.setFont(font)
         self.guardar.setObjectName("guardar")
-        self.guardar.clicked.connect(self.save)
-        self.guardar.clicked.connect(self.clearAll)
+        self.guardar.clicked.connect(self.saveOrUpd)
         self.retranslate_2()
         QtCore.QMetaObject.connectSlotsByName(self.caja)
-        self.caja.setTabOrder(self.guardar, self.descartar)
+        self.caja.setTabOrder(self.lremate, self.lines[0])
+        k=0
+        while(k<len(self.lines)-1):
+            self.setTabOrder(self.lines[k], self.lines[k+1])
+            k+=1
+        self.setTabOrder(self.lines[k], self.guardar)
+        self.setTabOrder(self.guardar, self.descartar)
         return self.caja
 
     def showCaja(self):
@@ -391,31 +403,71 @@ class Ui_MainWindow(QtWidgets.QWidget):
         for field in self.lines:
             field.clear()
 
-    def save(self,):
+    def saveOrUpd(self):
+        nro = self.lremate.text()
+        self.idRemate = self.sess.execute("SELECT id FROM remate WHERE numero = :num AND idCarrera = :car", {'num':nro, 'car':self.idCarrera}).scalar()
+        if(nro == ""):
+            QtWidgets.QMessageBox.about(self, "Remate", "Debe ingresar el número de remate")
+        elif(self.idRemate is not None):
+            self.nroRemate = int(nro)
+            self.updRemate()
+        else:
+            self.nroRemate = int(nro)
+            self.save()
+            self.clearAll()
+            
+
+    def save(self):
         i = 1
-        sess = utils.bd()
-        self.idRemate = sess.execute("SELECT COUNT(*) FROM remate").scalar() + 1
-        self.nroRemate = int(self.lremate.text())
+        self.idRemate = self.sess.execute("SELECT COUNT(*) FROM remate").scalar() + 1
         if(self.diezP.isChecked()):
             porc = 0.1
         if(self.veinteP.isChecked()):
             porc = 0.2
         if(self.treintaP.isChecked()):
             porc = 0.3
-        sess.execute("INSERT INTO remate(id, idCarrera, numero, porcentaje) VALUES (:val, :par, :var, :car)", {'val' : self.idRemate, 'par' : self.idCarrera, 'var' : self.nroRemate, 'car' : porc})
+        self.sess.execute("INSERT INTO remate(id, idCarrera, numero, porcentaje) VALUES (:val, :par, :var, :car)", {'val' : self.idRemate, 'par' : self.idCarrera, 'var' : self.nroRemate, 'car' : porc})
         for it in self.lines:
             self.rmt = it.text()
             if(self.rmt == ""):
                 self.rmt = 0
             else:
                 self.rmt = int(self.rmt)
-            self.idCaballo = sess.execute("SELECT COUNT(*) FROM caballo").scalar() + 1
-            sess.execute("INSERT INTO caballo(id, idCarrera, idRemate, numero, monto) VALUES (:val, :par, :rem, :var, :car)", {'val' : self.idCaballo, 'par' : self.idCarrera, 'rem' : self.idRemate, 'var' : i, 'car' : self.rmt})
-            sess.commit()
+            self.idCaballo = self.sess.execute("SELECT COUNT(*) FROM caballo").scalar() + 1
+            self.sess.execute("INSERT INTO caballo(id, idCarrera, idRemate, numero, monto) VALUES (:val, :par, :rem, :var, :car)", {'val' : self.idCaballo, 'par' : self.idCarrera, 'rem' : self.idRemate, 'var' : i, 'car' : self.rmt})
             i+=1
-        total = sess.execute("SELECT SUM(monto) FROM caballo WHERE idRemate = :var", {'var' : self.idRemate}).scalar()
-        sess.execute("UPDATE remate SET total = :tot WHERE id = :rem", {'tot' : total, 'rem' : self.idRemate})
-        sess.commit()
-        sess.close()
+        total = self.sess.execute("SELECT SUM(monto) FROM caballo WHERE idRemate = :var", {'var' : self.idRemate}).scalar()
+        self.sess.execute("UPDATE remate SET total = :tot WHERE id = :rem", {'tot' : total, 'rem' : self.idRemate})
+        self.sess.commit()
+        self.sess.close()
         self.lremate.setText(str(self.nroRemate + 1))
 
+    def updRemate(self):
+        self.idRemate = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car AND numero = :rem", {'car' : self.idCarrera, 'rem' : self.nroRemate}).scalar()
+        if(self.diezP.isChecked()):
+            porc = 0.1
+        if(self.veinteP.isChecked()):
+            porc = 0.2
+        if(self.treintaP.isChecked()):
+            porc = 0.3
+        i = 1
+        for it in self.lines:
+            self.rmt = it.text()
+            if(self.rmt == ""):
+                self.rmt = 0
+            else:
+                self.rmt = int(self.rmt)
+            self.idCaballo = self.sess.execute("SELECT id FROM caballo WHERE idRemate = :rem AND numero = :num", {'rem' : self.idRemate, 'num' : i}).scalar()
+            self.sess.execute("UPDATE caballo SET monto = :mon WHERE id = :cab", {'mon' : self.rmt, 'cab' : self.idCaballo})
+            i+=1
+        total = self.sess.execute("SELECT SUM(monto) FROM caballo WHERE idRemate = :var", {'var' : self.idRemate}).scalar()
+        self.sess.execute("UPDATE remate SET porcentaje = :por, total = :tot WHERE id = :rem", {'por' : porc, 'tot' : total, 'rem' : self.idRemate})
+        msg = QtWidgets.QMessageBox.question(self, "Actualizar", "El remate ya se encuentra cargado, actualizar?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        if msg == QtWidgets.QMessageBox.Yes:
+            self.sess.commit()
+            self.sess.close()
+            self.clearAll()
+            self.lremate.setText(str(self.nroRemate + 1))
+        else:
+            self.sess.rollback()
+            self.sess.close()
