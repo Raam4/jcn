@@ -122,8 +122,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionImprimir_Carrera.setObjectName("actionImprimir_Carrera")
         self.actionImprimir_Reunion = QtWidgets.QAction(MainWindow)
         self.actionImprimir_Reunion.setObjectName("actionImprimir_Reunion")
+
         self.actionEditar_Remate = QtWidgets.QAction(MainWindow)
         self.actionEditar_Remate.setObjectName("actionEditar_Remate")
+        self.actionEditar_Remate.triggered.connect(self.eliminador)
+
         self.actionEliminar_Caballo = QtWidgets.QAction(MainWindow)
         self.actionEliminar_Caballo.setObjectName("actionEliminar_Caballo")
         self.actionEliminar_Carrera = QtWidgets.QAction(MainWindow)
@@ -231,24 +234,28 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.creaB.clicked.connect(self.dlg.close)
         self.d1.setText("Seleccionar Carrera")
         self.d2.setText("Crear Carrera")
-        i = self.sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).scalar()
+        i = self.sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).scalar() + 1
+        j = 1
         self.combo = QtWidgets.QComboBox(self.dlg)
         self.combo.setGeometry(60, 50, 90, 23)
         self.combo.setPlaceholderText("None")
-        while(0<i):
-            query = self.sess.execute("SELECT * FROM carrera WHERE id = :val", {'val' : i})
-            res = query.fetchone()
-            wanted = str(res['numero'])
-            self.combo.addItem(wanted)
-            i-=1
+        while(j<=i):
+            query = self.sess.execute("SELECT numero FROM carrera WHERE idReunion = :reu AND id = :val", {'reu': self.idReunion, 'val' : j}).scalar()
+            if(query is not None):
+                self.combo.addItem(str(query))
+            j+=1
         self.sess.close()
         self.combo.activated[str].connect(self.seleccion)
         self.combo.activated.connect(self.dlg.close)
         self.dlg.exec_()
 
     def crear(self):
-        self.nroCarrera = self.sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).scalar() + 1
-        self.idCarrera = self.sess.execute("SELECT COUNT(*) FROM carrera").scalar() + 1
+        try:
+            self.nroCarrera = self.sess.execute("SELECT numero FROM carrera WHERE ROWID IN (SELECT max( ROWID ) FROM carrera WHERE idReunion = :val)", {'val' : self.idReunion}).scalar() + 1
+            self.idCarrera = self.sess.execute("SELECT id FROM carrera WHERE ROWID IN (SELECT max( ROWID ) FROM carrera)").scalar() + 1
+        except:
+            self.nroCarrera = 1
+            self.idCarrera = 1
         self.sess.execute("INSERT INTO carrera(id, idReunion, numero) VALUES (:val, :par, :var)", {'val' : self.idCarrera, 'par' : self.idReunion, 'var' : self.nroCarrera})
         self.sess.commit()
         self.sess.close()
@@ -415,11 +422,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.nroRemate = int(nro)
             self.save()
             self.clearAll()
-            
 
     def save(self):
         i = 1
-        self.idRemate = self.sess.execute("SELECT COUNT(*) FROM remate").scalar() + 1
+        self.idRemate = self.sess.execute("SELECT id FROM remate WHERE ROWID IN ( SELECT max( ROWID ) FROM remate )").scalar() + 1
         if(self.diezP.isChecked()):
             porc = 0.1
         if(self.veinteP.isChecked()):
@@ -433,7 +439,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.rmt = 0
             else:
                 self.rmt = int(self.rmt)
-            self.idCaballo = self.sess.execute("SELECT COUNT(*) FROM caballo").scalar() + 1
+            self.idCaballo = self.sess.execute("SELECT id FROM caballo WHERE ROWID IN (SELECT max(ROWID) FROM caballo)").scalar() + 1
             self.sess.execute("INSERT INTO caballo(id, idCarrera, idRemate, numero, monto) VALUES (:val, :par, :rem, :var, :car)", {'val' : self.idCaballo, 'par' : self.idCarrera, 'rem' : self.idRemate, 'var' : i, 'car' : self.rmt})
             i+=1
         total = self.sess.execute("SELECT SUM(monto) FROM caballo WHERE idRemate = :var", {'var' : self.idRemate}).scalar()
@@ -471,3 +477,41 @@ class Ui_MainWindow(QtWidgets.QWidget):
         else:
             self.sess.rollback()
             self.sess.close()
+
+    def eliminador(self):
+        self.elimina = QtWidgets.QDialog()
+        self.elimina.resize(270, 90)
+        self.elimina.setMinimumSize(QtCore.QSize(270, 90))
+        self.elimina.setMaximumSize(QtCore.QSize(270, 90))
+        self.labelElimina = QtWidgets.QLabel(self.elimina)
+        self.labelElimina.setGeometry(QtCore.QRect(30, 10, 260, 30))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.labelElimina.setFont(font)
+        self.labelElimina.setObjectName("labelDel")
+        self.labelElimina.setText("Ingrese el numero de remate")
+        self.lineElimina = QtWidgets.QLineEdit(self.elimina)
+        self.lineElimina.setGeometry(QtCore.QRect(130, 40, 40, 20))
+        self.lineElimina.setObjectName("labelDel")
+        self.lineElimina.setValidator(QtGui.QIntValidator())
+        self.lineElimina.returnPressed.connect(self.eliminaRemate)
+        self.elimina.show()
+
+    def eliminaRemate(self):
+        rem = int(self.lineElimina.text())
+        qry = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car AND numero = :rem", {'car':self.idCarrera, 'rem':int(rem)}).scalar()
+        if(qry is None):
+            QtWidgets.QMessageBox.about(self, "Remate", "El remate no existe en esta carrera")
+        else:
+            self.sess.execute("DELETE FROM caballo WHERE idCarrera = :car AND idRemate = :rem", {'car':self.idCarrera, 'rem':qry})
+            self.sess.execute("DELETE FROM remate WHERE idCarrera = :car AND id = :idr", {'car':self.idCarrera, 'idr':qry})
+            msg = QtWidgets.QMessageBox.question(self, "Eliminar", "El remate se eliminará, proceder?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if msg == QtWidgets.QMessageBox.Yes:
+                self.sess.commit()
+            else:
+                self.sess.rollback()
+        self.sess.close()
+        self.elimina.close()

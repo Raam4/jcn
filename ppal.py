@@ -1,6 +1,6 @@
 import sys
 sys.path.append("./")
-from widgets.Wmain import Ui_MainWindow
+from Wmain import Ui_MainWindow
 from PyQt5 import QtWidgets
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
