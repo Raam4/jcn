@@ -530,8 +530,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.sess.commit()
             else:
                 self.sess.rollback()
-            self.sess.close()
-            self.elimina.close()
+        self.sess.close()
+        self.elimina.close()
 
     def eliminaCaballo(self):
         cab = int(self.lineElimina.text())
@@ -562,8 +562,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.sess.commit()
             else:
                 self.sess.rollback()
-            self.sess.close()
-            self.elimina.close()
+        self.sess.close()
+        self.elimina.close()
 
     def eliminaCarrera(self):
         car = int(self.lineElimina.text())
@@ -579,5 +579,22 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.sess.commit()
             else:
                 self.sess.rollback()
-            self.sess.close()
-            self.elimina.close()
+        self.sess.close()
+        self.elimina.close()
+
+    def cuentasRemate(self):
+        try:
+            totalRemate = self.sess.execute("SELECT total FROM remate WHERE idCarrera = :car, idRemate = :rem", {'car':self.idCarrera, 'rem':self.idRemate}).scalar()
+            porc = self.sess.execute("SELECT porcentaje FROM remate WHERE idCarrera = :car, idRemate = :rem", {'car':self.idCarrera, 'rem':self.idRemate}).scalar()
+            aPagar = totalRemate * (1-porc)
+            aRendir = totalRemate - aPagar
+            self.sess.execute("INSERT INTO remate(aPagar, aRendir) VALUES (:apa, :are)", {'apa':aPagar, 'are':aRendir})
+        except:
+            pass
+
+    def cuentasCarrera(self):
+        try:
+            totalCarrera = self.sess.execute("SELECT SUM(total) FROM remate WHERE idCarrera = :car", {'car':self.idCarrera}).scalar()
+            self.sess.execute("INSERT INTO carrera(total) VALUES (:tot)", {'tot':totalCarrera})
+        except:
+            pass
