@@ -133,6 +133,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.actionEliminar_Carrera = QtWidgets.QAction(MainWindow)
         self.actionEliminar_Carrera.setObjectName("actionEliminar_Carrera")
+        self.actionEliminar_Carrera.triggered.connect(lambda: self.eliminador('car'))
+
         self.actionSalir = QtWidgets.QAction(MainWindow)
         self.actionSalir.setObjectName("actionSalir")
         self.actionSalir.triggered.connect(self.close)
@@ -510,6 +512,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
         if(_str=='rem'):
             self.labelElimina.setText("Ingrese el numero de remate:")
             self.lineElimina.returnPressed.connect(self.eliminaRemate)
+        if(_str=='car'):
+            self.labelElimina.setText("Ingrese el numero de carrera:")
+            self.lineElimina.returnPressed.connect(self.eliminaCarrera)
         self.elimina.show()
 
     def eliminaRemate(self):
@@ -554,6 +559,23 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     if(c==3):
                         porc = 0.2
                     self.sess.execute("UPDATE remate SET porcentaje = :por, total = :tot WHERE id = :rem", {'por':porc, 'tot' : tot, 'rem' : rem[0]})
+                self.sess.commit()
+            else:
+                self.sess.rollback()
+            self.sess.close()
+            self.elimina.close()
+
+    def eliminaCarrera(self):
+        car = int(self.lineElimina.text())
+        qry = self.sess.execute("SELECT id FROM carrera WHERE idReunion = :reu AND numero = :num",{'reu':self.idReunion, 'num':car}).scalar()
+        if(qry is None):
+            QtWidgets.QMessageBox.about(self, "Remate", "La carrera no existe")
+        else:
+            self.sess.execute("DELETE FROM caballo WHERE idCarrera = :car", {'car':car})
+            self.sess.execute("DELETE FROM remate WHERE idCarrera = :car", {'car':car})
+            self.sess.execute("DELETE FROM carrera WHERE id = :car", {'car':car})
+            msg = QtWidgets.QMessageBox.question(self, "Eliminar", "La carrera y todos sus remates se eliminarán, proceder?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if msg == QtWidgets.QMessageBox.Yes:
                 self.sess.commit()
             else:
                 self.sess.rollback()
