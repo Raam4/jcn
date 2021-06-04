@@ -123,12 +123,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionImprimir_Reunion = QtWidgets.QAction(MainWindow)
         self.actionImprimir_Reunion.setObjectName("actionImprimir_Reunion")
 
-        self.actionEditar_Remate = QtWidgets.QAction(MainWindow)
-        self.actionEditar_Remate.setObjectName("actionEditar_Remate")
-        self.actionEditar_Remate.triggered.connect(self.eliminador)
-
         self.actionEliminar_Caballo = QtWidgets.QAction(MainWindow)
         self.actionEliminar_Caballo.setObjectName("actionEliminar_Caballo")
+        self.actionEliminar_Caballo.triggered.connect(lambda: self.eliminador('cab'))
+
+        self.actionEliminar_Remate = QtWidgets.QAction(MainWindow)
+        self.actionEliminar_Remate.setObjectName("actionEliminar_Remate")
+        self.actionEliminar_Remate.triggered.connect(lambda: self.eliminador('rem'))
+
         self.actionEliminar_Carrera = QtWidgets.QAction(MainWindow)
         self.actionEliminar_Carrera.setObjectName("actionEliminar_Carrera")
         self.actionSalir = QtWidgets.QAction(MainWindow)
@@ -140,8 +142,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuAcciones.addAction(self.actionImprimir_remates)
         self.menuAcciones.addAction(self.actionImprimir_Carrera)
         self.menuAcciones.addAction(self.actionImprimir_Reunion)
-        self.menuEdicion.addAction(self.actionEditar_Remate)
         self.menuEdicion.addAction(self.actionEliminar_Caballo)
+        self.menuEdicion.addAction(self.actionEliminar_Remate)
         self.menuEdicion.addAction(self.actionEliminar_Carrera)
         self.menuBar.addAction(self.menuMen.menuAction())
         self.menuBar.addAction(self.menuAcciones.menuAction())
@@ -179,7 +181,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionImprimir_remates.setText(_translate("Remates JCN", "Imprimir Remate"))
         self.actionImprimir_Carrera.setText(_translate("Remates JCN", "Imprimir Carrera"))
         self.actionImprimir_Reunion.setText(_translate("Remates JCN", "Imprimir Reunión"))
-        self.actionEditar_Remate.setText(_translate("Remates JCN", "Editar Remate"))
+        self.actionEliminar_Remate.setText(_translate("Remates JCN", "Eliminar Remate"))
         self.actionEliminar_Caballo.setText(_translate("Remates JCN", "Eliminar Caballo"))
         self.actionEliminar_Carrera.setText(_translate("Remates JCN", "Eliminar Carrera"))
         self.actionSalir.setText(_translate("Remates JCN", "Salir"))
@@ -425,7 +427,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     def save(self):
         i = 1
-        self.idRemate = self.sess.execute("SELECT id FROM remate WHERE ROWID IN ( SELECT max( ROWID ) FROM remate )").scalar() + 1
+        try:
+            self.idRemate = self.sess.execute("SELECT id FROM remate WHERE ROWID IN ( SELECT max( ROWID ) FROM remate )").scalar() + 1
+        except:
+            self.idRemate = 1
         if(self.diezP.isChecked()):
             porc = 0.1
         if(self.veinteP.isChecked()):
@@ -436,10 +441,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         for it in self.lines:
             self.rmt = it.text()
             if(self.rmt == ""):
-                self.rmt = 0
+                self.rmt = None
             else:
                 self.rmt = int(self.rmt)
-            self.idCaballo = self.sess.execute("SELECT id FROM caballo WHERE ROWID IN (SELECT max(ROWID) FROM caballo)").scalar() + 1
+            try:
+                self.idCaballo = self.sess.execute("SELECT id FROM caballo WHERE ROWID IN (SELECT max(ROWID) FROM caballo)").scalar() + 1
+            except:
+                self.idCaballo = 1
             self.sess.execute("INSERT INTO caballo(id, idCarrera, idRemate, numero, monto) VALUES (:val, :par, :rem, :var, :car)", {'val' : self.idCaballo, 'par' : self.idCarrera, 'rem' : self.idRemate, 'var' : i, 'car' : self.rmt})
             i+=1
         total = self.sess.execute("SELECT SUM(monto) FROM caballo WHERE idRemate = :var", {'var' : self.idRemate}).scalar()
@@ -460,7 +468,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         for it in self.lines:
             self.rmt = it.text()
             if(self.rmt == ""):
-                self.rmt = 0
+                self.rmt = None
             else:
                 self.rmt = int(self.rmt)
             self.idCaballo = self.sess.execute("SELECT id FROM caballo WHERE idRemate = :rem AND numero = :num", {'rem' : self.idRemate, 'num' : i}).scalar()
@@ -478,7 +486,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.sess.rollback()
             self.sess.close()
 
-    def eliminador(self):
+    def eliminador(self, _str):
         self.elimina = QtWidgets.QDialog()
         self.elimina.resize(270, 90)
         self.elimina.setMinimumSize(QtCore.QSize(270, 90))
@@ -492,12 +500,16 @@ class Ui_MainWindow(QtWidgets.QWidget):
         font.setWeight(75)
         self.labelElimina.setFont(font)
         self.labelElimina.setObjectName("labelDel")
-        self.labelElimina.setText("Ingrese el numero de remate")
         self.lineElimina = QtWidgets.QLineEdit(self.elimina)
         self.lineElimina.setGeometry(QtCore.QRect(130, 40, 40, 20))
         self.lineElimina.setObjectName("labelDel")
         self.lineElimina.setValidator(QtGui.QIntValidator())
-        self.lineElimina.returnPressed.connect(self.eliminaRemate)
+        if(_str=='cab'):
+            self.labelElimina.setText("Ingrese el numero de caballo:")
+            self.lineElimina.returnPressed.connect(self.eliminaCaballo)
+        if(_str=='rem'):
+            self.labelElimina.setText("Ingrese el numero de remate:")
+            self.lineElimina.returnPressed.connect(self.eliminaRemate)
         self.elimina.show()
 
     def eliminaRemate(self):
@@ -513,5 +525,37 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.sess.commit()
             else:
                 self.sess.rollback()
-        self.sess.close()
-        self.elimina.close()
+            self.sess.close()
+            self.elimina.close()
+
+    def eliminaCaballo(self):
+        cab = int(self.lineElimina.text())
+        qry = self.sess.execute("SELECT cantCaballos FROM carrera WHERE id = :car", {'car':self.idCarrera}).scalar()
+        if(qry<cab):
+            QtWidgets.QMessageBox.about(self, "Remate", "El caballo no existe en esta carrera")
+        else:
+            self.sess.execute("UPDATE caballo SET monto = NULL WHERE idCarrera = :car AND numero = :cab", {'car':self.idCarrera, 'cab':cab})
+            msg = QtWidgets.QMessageBox.question(self, "Eliminar", "El caballo se eliminará de todos los remates en esta carrera, proceder?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if msg == QtWidgets.QMessageBox.Yes:
+                ids = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
+                ids = ids.fetchall()
+                for rem in ids:
+                    tot = self.sess.execute("SELECT SUM(monto) FROM caballo WHERE idCarrera = :var AND idRemate = :rem", {'var' : self.idCarrera, 'rem':rem[0]}).scalar()
+                    porc = 0.3
+                    z = 1
+                    c = 0
+                    while(z<=qry):
+                        cont = self.sess.execute("SELECT monto FROM caballo WHERE idCarrera = :car AND idRemate = :rem AND numero = :num",{'car':self.idCarrera, 'rem':rem[0], 'num':z}).scalar()
+                        if(cont is not None):
+                            c+=1
+                        z+=1
+                    if(c==2):
+                        porc = 0.1
+                    if(c==3):
+                        porc = 0.2
+                    self.sess.execute("UPDATE remate SET porcentaje = :por, total = :tot WHERE id = :rem", {'por':porc, 'tot' : tot, 'rem' : rem[0]})
+                self.sess.commit()
+            else:
+                self.sess.rollback()
+            self.sess.close()
+            self.elimina.close()
