@@ -3,6 +3,8 @@ sys.path.append("./")
 from PyQt5 import QtCore, QtGui, QtWidgets
 import utils
 import datetime
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
 
 class Ui_MainWindow(QtWidgets.QWidget):
     idCarrera = None
@@ -118,6 +120,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.actionImprimir_remates = QtWidgets.QAction(MainWindow)
         self.actionImprimir_remates.setObjectName("actionImprimir_remates")
+        self.actionImprimir_remates.triggered.connect(self.genpdf)
         self.actionImprimir_Carrera = QtWidgets.QAction(MainWindow)
         self.actionImprimir_Carrera.setObjectName("actionImprimir_Carrera")
         self.actionImprimir_Reunion = QtWidgets.QAction(MainWindow)
@@ -255,11 +258,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     def crear(self):
         try:
-            self.nroCarrera = self.sess.execute("SELECT numero FROM carrera WHERE ROWID IN (SELECT max( ROWID ) FROM carrera WHERE idReunion = :val)", {'val' : self.idReunion}).scalar() + 1
             self.idCarrera = self.sess.execute("SELECT id FROM carrera WHERE ROWID IN (SELECT max( ROWID ) FROM carrera)").scalar() + 1
         except:
-            self.nroCarrera = 1
             self.idCarrera = 1
+        try:
+            self.nroCarrera = self.sess.execute("SELECT numero FROM carrera WHERE ROWID IN (SELECT max( ROWID ) FROM carrera WHERE idReunion = :val)", {'val' : self.idReunion}).scalar() + 1
+        except:
+            self.nroCarrera = 1
         self.sess.execute("INSERT INTO carrera(id, idReunion, numero) VALUES (:val, :par, :var)", {'val' : self.idCarrera, 'par' : self.idReunion, 'var' : self.nroCarrera})
         self.sess.commit()
         self.sess.close()
@@ -309,6 +314,51 @@ class Ui_MainWindow(QtWidgets.QWidget):
         sess.commit()
         sess.close()
         self.setPorcentaje()
+        self.cabsNameW()
+
+    def cabsNameW(self):
+        cant = self.cantCaballos
+        self.cabsName = QtWidgets.QDialog()
+        self.cabsName.resize(360, 130+((cant-2)*30))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(9)
+        font.setBold(True)
+        font.setWeight(75)
+
+        self.label = QtWidgets.QLabel(self.cabsName)
+        self.label.setGeometry(QtCore.QRect(10, 0, 341, 41))
+        self.label.setFont(font)
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.label.setObjectName("label")
+        self.label.setText("Ingrese los nombres de los caballos en carrera")
+
+        self.cabsNames = []
+        self.cabsNumber = []
+        i = 0
+        h = 40
+        while(i<cant):
+            self.cabsNames.append(QtWidgets.QLineEdit(self.cabsName))
+            self.cabsNames[i] = QtWidgets.QLineEdit(self.cabsName)
+            self.cabsNames[i].setGeometry(QtCore.QRect(100, h, 171, 20))
+
+            self.cabsNumber.append(QtWidgets.QLineEdit(self.cabsName))
+            self.cabsNumber[i] = QtWidgets.QLabel(self.cabsName)
+            self.cabsNumber[i].setGeometry(QtCore.QRect(70, h, 16, 16))
+            self.cabsNumber[i].setFont(font)
+            self.cabsNumber[i].setAlignment(QtCore.Qt.AlignCenter)
+            self.cabsNumber[i].setObjectName("nro"+str(i+1))
+            self.cabsNumber[i].setText(str(i+1))
+        
+            i += 1
+            h += 30
+
+        self.pushButton = QtWidgets.QPushButton(self.cabsName)
+        self.pushButton.setGeometry(QtCore.QRect(140, h, 75, 23))
+        self.pushButton.setObjectName("pushButton")
+        self.pushButton.setText("Confirmar")
+        self.cabsName.exec_()
+
 
     def setPorcentaje(self):
         if(self.cantCaballos==2):
@@ -454,6 +504,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
             i+=1
         total = self.sess.execute("SELECT SUM(monto) FROM caballo WHERE idRemate = :var", {'var' : self.idRemate}).scalar()
         self.sess.execute("UPDATE remate SET total = :tot WHERE id = :rem", {'tot' : total, 'rem' : self.idRemate})
+        self.cuentasRemate(self.idCarrera, self.idRemate)
+        self.cuentasCarrera(self.idCarrera)
         self.sess.commit()
         self.sess.close()
         self.lremate.setText(str(self.nroRemate + 1))
@@ -480,6 +532,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.sess.execute("UPDATE remate SET porcentaje = :por, total = :tot WHERE id = :rem", {'por' : porc, 'tot' : total, 'rem' : self.idRemate})
         msg = QtWidgets.QMessageBox.question(self, "Actualizar", "El remate ya se encuentra cargado, actualizar?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
         if msg == QtWidgets.QMessageBox.Yes:
+            self.cuentasRemate(self.idCarrera, self.idRemate)
+            self.cuentasCarrera(self.idCarrera)
             self.sess.commit()
             self.sess.close()
             self.clearAll()
@@ -527,6 +581,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.sess.execute("DELETE FROM remate WHERE idCarrera = :car AND id = :idr", {'car':self.idCarrera, 'idr':qry})
             msg = QtWidgets.QMessageBox.question(self, "Eliminar", "El remate se eliminará, proceder?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
             if msg == QtWidgets.QMessageBox.Yes:
+                self.cuentasCarrera(self.idCarrera)
                 self.sess.commit()
             else:
                 self.sess.rollback()
@@ -559,6 +614,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     if(c==3):
                         porc = 0.2
                     self.sess.execute("UPDATE remate SET porcentaje = :por, total = :tot WHERE id = :rem", {'por':porc, 'tot' : tot, 'rem' : rem[0]})
+                    self.cuentasRemate(self.idCarrera, rem[0])
+                    self.cuentasCarrera(self.idCarrera)
                 self.sess.commit()
             else:
                 self.sess.rollback()
@@ -582,19 +639,23 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.sess.close()
         self.elimina.close()
 
-    def cuentasRemate(self):
-        try:
-            totalRemate = self.sess.execute("SELECT total FROM remate WHERE idCarrera = :car, idRemate = :rem", {'car':self.idCarrera, 'rem':self.idRemate}).scalar()
-            porc = self.sess.execute("SELECT porcentaje FROM remate WHERE idCarrera = :car, idRemate = :rem", {'car':self.idCarrera, 'rem':self.idRemate}).scalar()
-            aPagar = totalRemate * (1-porc)
-            aRendir = totalRemate - aPagar
-            self.sess.execute("INSERT INTO remate(aPagar, aRendir) VALUES (:apa, :are)", {'apa':aPagar, 'are':aRendir})
-        except:
-            pass
-
-    def cuentasCarrera(self):
-        try:
-            totalCarrera = self.sess.execute("SELECT SUM(total) FROM remate WHERE idCarrera = :car", {'car':self.idCarrera}).scalar()
-            self.sess.execute("INSERT INTO carrera(total) VALUES (:tot)", {'tot':totalCarrera})
-        except:
-            pass
+    def cuentasRemate(self, idCar, idRem):
+        totalRemate = self.sess.execute("SELECT total FROM remate WHERE idCarrera = :car AND id = :rem", {'car':idCar, 'rem':idRem}).scalar()
+        porc = self.sess.execute("SELECT porcentaje FROM remate WHERE idCarrera = :car AND id = :rem", {'car':idCar, 'rem':idRem}).scalar()
+        aPagar = totalRemate * (1-porc)
+        aRendir = totalRemate - aPagar
+        self.sess.execute("UPDATE remate SET aPagar = :apa, aRendir = :are WHERE idCarrera = :car AND id = :rem", {'apa':aPagar, 'are':aRendir, 'car':idCar, 'rem':idRem})
+       
+    def cuentasCarrera(self, idCar):
+        totalCarrera = self.sess.execute("SELECT SUM(total) FROM remate WHERE idCarrera = :car", {'car':idCar}).scalar()
+        self.sess.execute("UPDATE carrera SET total = :tot WHERE id = :car", {'tot':totalCarrera, 'car':idCar})
+        totalAPagar = self.sess.execute("SELECT SUM(aPagar) FROM remate WHERE idCarrera = :car", {'car':idCar}).scalar()
+        totalARendir = self.sess.execute("SELECT SUM(aRendir) FROM remate WHERE idCarrera = :car", {'car':idCar}).scalar()
+        self.sess.execute("UPDATE carrera SET aRendir = :are, aPagar = :apa WHERE id = :car AND idReunion = :reu", {'are':totalARendir, 'apa':totalAPagar, 'car':idCar, 'reu':self.idReunion})
+        
+    def genpdf(self):
+        c = canvas.Canvas("pdf/algo.pdf", pagesize=A4)
+        h, w = A4
+        c.drawString(840, 590, "¡Hola, mundo!")
+        print(h, w)
+        c.save()
