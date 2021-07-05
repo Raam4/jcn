@@ -4,7 +4,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import utils
 import datetime
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
 
 class Ui_MainWindow(QtWidgets.QWidget):
     idCarrera = None
@@ -120,9 +119,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.actionImprimir_remates = QtWidgets.QAction(MainWindow)
         self.actionImprimir_remates.setObjectName("actionImprimir_remates")
-        self.actionImprimir_remates.triggered.connect(self.genpdf)
         self.actionImprimir_Carrera = QtWidgets.QAction(MainWindow)
+
         self.actionImprimir_Carrera.setObjectName("actionImprimir_Carrera")
+        self.actionImprimir_Carrera.triggered.connect(self.imprimeCarrera)
+
         self.actionImprimir_Reunion = QtWidgets.QAction(MainWindow)
         self.actionImprimir_Reunion.setObjectName("actionImprimir_Reunion")
 
@@ -169,14 +170,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.treintaP.setText(_translate("Remates JCN", "30%"))
         self.bsubtotales.setTitle(_translate("Remates JCN", "Subtotales"))
         self.subtotales.setHtml(_translate("Remates JCN", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:9pt; font-weight:600;\">Recaudado        $var</span></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt; font-weight:600;\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:9pt; font-weight:600;\">A Pagar        $var</span></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt; font-weight:600;\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:9pt; font-weight:600;\">A Rendir        $var</span></p></body></html>"))
+        "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+        "p, li { white-space: pre-wrap; }\n"
+        "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+        "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:9pt; font-weight:600;\">Recaudado        $var</span></p>\n"
+        "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt; font-weight:600;\"><br /></p>\n"
+        "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:9pt; font-weight:600;\">A Pagar        $var</span></p>\n"
+        "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt; font-weight:600;\"><br /></p>\n"
+        "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:9pt; font-weight:600;\">A Rendir        $var</span></p></body></html>"))
         self.bhistorial.setTitle(_translate("Remates JCN", "Historial de Carga"))
         self.menuMen.setTitle(_translate("Remates JCN", "Parámetros"))
         self.menuAcciones.setTitle(_translate("Remates JCN", "Impresiones"))
@@ -659,9 +660,96 @@ class Ui_MainWindow(QtWidgets.QWidget):
         totalARendir = self.sess.execute("SELECT SUM(aRendir) FROM remate WHERE idCarrera = :car", {'car':idCar}).scalar()
         self.sess.execute("UPDATE carrera SET aRendir = :are, aPagar = :apa WHERE id = :car AND idReunion = :reu", {'are':totalARendir, 'apa':totalAPagar, 'car':idCar, 'reu':self.idReunion})
         
-    def genpdf(self):
-        c = canvas.Canvas("pdf/algo.pdf", pagesize=A4)
-        h, w = A4
-        c.drawString(840, 590, "¡Hola, mundo!")
-        print(h, w)
+    def resetPdfVars(self):
+        self.fontPdf = "Helvetica"
+        self.sizePdf = 10
+        self.ydata = 820 #pos y de datos globales
+        self.xdatalft = [20, 150, 220] #pos x de datos globales izq
+        self.xdatargt = [310, 440, 510] #pos x de datos globalez der
+        self.xcablft = [30, 55, 225] #pos x cabecera de tabla izq
+        self.xcabrgt = [320, 345, 515] #pos x cabecera de tabla der
+        self.ygrid = [] #eje y de primera linea de los grid
+        self.xgridlft = [20, 50, 200, 280] #eje x de lineas verticales de grid izq
+        self.xgridrgt = [310, 340, 490, 570] #eje x de lineas verticales de grid der
+    
+    def imprimeCarrera(self):
+        self.resetPdfVars()
+        idRems = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera}).fetchall()
+        cantCabs = self.sess.execute("SELECT cantCaballos FROM carrera WHERE id = :car", {'car':self.idCarrera}).scalar()
+        nombres = self.sess.execute("SELECT names FROM carrera WHERE id = :car", {'car':self.idCarrera}).fetchall()
+        nombres = nombres[0][0].split(sep='|')
+        i = 0
+        c = canvas.Canvas("pdf/carrera"+str(self.nroCarrera)+".pdf")
+        c.setFont(self.fontPdf, self.sizePdf)
+        #linea vertical
+        c.saveState()
+        c.setDash(1, 2)
+        c.line(295, 825, 295, 5)
+        c.restoreState()
+        #fin linea vertical
+        largo = 0
+        for id in idRems:
+            nroRem = self.sess.execute("SELECT numero FROM remate WHERE id = :rem", {'rem':id[0]}).scalar()
+            start = self.ydata
+            self.ygrid = []
+            if(start - largo < 0):
+                c.showPage()
+                self.resetPdfVars()
+                start = self.ydata
+                c.setFont(self.fontPdf, self.sizePdf)
+                #linea vertical
+                c.saveState()
+                c.setDash(1, 2)
+                c.line(295, 825, 295, 5)
+                c.restoreState()
+                #fin linea vertical
+            if(i%2==0):
+                xdata = self.xdatalft
+                xcab = self.xcablft
+                xgrid = self.xgridlft
+            else:
+                xdata = self.xdatargt
+                xcab = self.xcabrgt
+                xgrid = self.xgridrgt
+            c.drawString(xdata[0], self.ydata, "Nro. de Remate: " + str(nroRem))
+            c.drawString(xdata[1], self.ydata, "Carrera: " + str(self.nroCarrera))
+            c.drawString(xdata[2], self.ydata, "dd/mm/aaaa")
+            self.ydata -= 22
+            c.drawString(xcab[0], self.ydata + 3, "N°")
+            c.drawString(xcab[1], self.ydata + 3, "Nombre")
+            c.drawString(xcab[2], self.ydata + 3, "Monto")
+            self.ygrid.append(self.ydata + 15)
+            j = 0
+            while(j<cantCabs):
+                j += 1
+                self.ygrid.append(self.ydata)
+                self.ydata -= 15
+                if(j<10):
+                    c.drawString(xcab[0]+3, self.ydata + 3, str(j))
+                else:
+                    c.drawString(xcab[0], self.ydata + 3, str(j))
+                c.drawString(xcab[1], self.ydata + 3, nombres[j-1])
+                monto = self.sess.execute("SELECT monto FROM caballo WHERE idRemate = :rem AND numero = :num", {'rem':nroRem, 'num':j}).scalar()
+                c.drawString(xcab[2] - 5, self.ydata + 3, "$" + str(monto))
+            self.ygrid.append(self.ydata)
+            c.grid(xgrid, self.ygrid)
+            self.ygrid = []
+            self.ydata -= 15
+            c.drawString(20, self.ydata, "Totales")
+            self.ydata -= 10
+            if(i==0):
+                largo = start - self.ydata
+            if(i%2==0):
+                #linea horizonal
+                c.saveState()
+                c.setDash(1, 2)
+                c.line(15, self.ydata, 575, self.ydata)
+                c.restoreState()
+                #fin linea horizonal
+                self.ydata = start
+            else:
+                self.ydata -= 15
+            i += 1
         c.save()
+
+    
