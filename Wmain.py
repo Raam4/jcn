@@ -317,7 +317,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.cabsNameW()
 
     def cabsNameW(self):
-        cant = self.cantCaballos
+        cant = int(self.cantCaballos)
         self.cabsName = QtWidgets.QDialog()
         self.cabsName.resize(360, 130+((cant-2)*30))
         font = QtGui.QFont()
@@ -325,40 +325,46 @@ class Ui_MainWindow(QtWidgets.QWidget):
         font.setPointSize(9)
         font.setBold(True)
         font.setWeight(75)
-
-        self.label = QtWidgets.QLabel(self.cabsName)
-        self.label.setGeometry(QtCore.QRect(10, 0, 341, 41))
-        self.label.setFont(font)
-        self.label.setAlignment(QtCore.Qt.AlignCenter)
-        self.label.setObjectName("label")
-        self.label.setText("Ingrese los nombres de los caballos en carrera")
-
+        self.labelName = QtWidgets.QLabel(self.cabsName)
+        self.labelName.setGeometry(QtCore.QRect(10, 0, 341, 41))
+        self.labelName.setFont(font)
+        self.labelName.setAlignment(QtCore.Qt.AlignCenter)
+        self.labelName.setObjectName("label")
+        self.labelName.setText("Ingrese los nombres de los caballos en carrera")
         self.cabsNames = []
         self.cabsNumber = []
         i = 0
         h = 40
         while(i<cant):
             self.cabsNames.append(QtWidgets.QLineEdit(self.cabsName))
-            self.cabsNames[i] = QtWidgets.QLineEdit(self.cabsName)
             self.cabsNames[i].setGeometry(QtCore.QRect(100, h, 171, 20))
-
-            self.cabsNumber.append(QtWidgets.QLineEdit(self.cabsName))
-            self.cabsNumber[i] = QtWidgets.QLabel(self.cabsName)
+            self.cabsNumber.append(QtWidgets.QLabel(self.cabsName))
             self.cabsNumber[i].setGeometry(QtCore.QRect(70, h, 16, 16))
             self.cabsNumber[i].setFont(font)
             self.cabsNumber[i].setAlignment(QtCore.Qt.AlignCenter)
             self.cabsNumber[i].setObjectName("nro"+str(i+1))
             self.cabsNumber[i].setText(str(i+1))
-        
             i += 1
             h += 30
-
         self.pushButton = QtWidgets.QPushButton(self.cabsName)
         self.pushButton.setGeometry(QtCore.QRect(140, h, 75, 23))
         self.pushButton.setObjectName("pushButton")
         self.pushButton.setText("Confirmar")
+        self.pushButton.clicked.connect(self.saveNames)
+        self.pushButton.clicked.connect(self.cabsName.close)
         self.cabsName.exec_()
 
+    def saveNames(self):
+        i = 0
+        strNames = ""
+        while(i<len(self.cabsNames)):
+            strNames += self.cabsNames[i].text()
+            if(i!=len(self.cabsNames)-1):
+                strNames += "|"
+            i += 1
+        self.sess.execute("UPDATE carrera SET names = :nom WHERE id = :car", {'nom':strNames, 'car':self.idCarrera})
+        self.sess.commit()
+        self.sess.close()
 
     def setPorcentaje(self):
         if(self.cantCaballos==2):
