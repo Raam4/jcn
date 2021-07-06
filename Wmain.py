@@ -185,7 +185,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuEdicion.setTitle(_translate("Remates JCN", "Edición"))
         self.actionCarreras.setText(_translate("Remates JCN", "Seleccionar Carrera"))
         self.actionCaballos.setText(_translate("Remates JCN", "Caballos"))
-        self.actionImprimir_remates.setText(_translate("Remates JCN", "Imprimir Remate"))
+        self.actionImprimir_remates.setText(_translate("Remates JCN", "Imprimir Remates"))
         self.actionImprimir_Carrera.setText(_translate("Remates JCN", "Imprimir Carrera"))
         self.actionImprimir_Reunion.setText(_translate("Remates JCN", "Imprimir Reunión"))
         self.actionEliminar_Remate.setText(_translate("Remates JCN", "Eliminar Remate"))
@@ -665,8 +665,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.fontPdf = "Courier"
         self.sizePdf = 10
         self.ydata = 820 #pos y de datos globales
-        self.xdatalft = [20, 150, 220] #pos x de datos globales izq
-        self.xdatargt = [310, 440, 510] #pos x de datos globalez der
+        self.xdatalft = [20, 130, 220] #pos x de datos globales izq
+        self.xdatargt = [310, 420, 510] #pos x de datos globalez der
         self.xcablft = [30, 55, 225] #pos x cabecera de tabla izq
         self.xcabrgt = [320, 345, 515] #pos x cabecera de tabla der
         self.ygrid = [] #eje y de primera linea de los grid
@@ -716,8 +716,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 xtot = 310
             c.saveState()
             c.setFont("Courier-Bold", 10)
-            c.drawString(xdata[0], self.ydata, "Nro. de Remate: " + str(nroRem))
-            c.drawString(xdata[1], self.ydata, "Carrera: " + str(self.nroCarrera))
+            c.drawString(xdata[0], self.ydata, "Remate " + str(nroRem))
+            c.drawString(xdata[1], self.ydata, "Carrera " + str(self.nroCarrera))
             c.drawString(xdata[2], self.ydata, "dd/mm/aaaa")
             self.ydata -= 22
             c.drawString(xcab[0], self.ydata + 3, "N°")
@@ -762,18 +762,48 @@ class Ui_MainWindow(QtWidgets.QWidget):
             else:
                 self.ydata -= 15
             i += 1
+        self.sess.close()
         c.save()
 
     def imprimeCarrera(self):
-        idsrem = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
+        idrems = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
         c = canvas.Canvas("pdfs/carreras/rendimiento_carrera_"+str(self.nroCarrera)+".pdf")
         c.setFont("Courier-Bold", 10)
         y = 820
-        c.drawString(20, y, "Carrera:" +str(self.idCarrera))
-        c.drawString(400, y, "Fecha: ")
-        y -= 15
-        c.drawString(20, y, "Nro Remate")
-        c.drawString(150, y, "Recaudado")
-        c.drawString(300, y, "Pagar")
-        c.drawString(450, y, "Rendir")
+        c.drawString(20, y, "Carrera "+str(self.nroCarrera))
+        c.drawString(400, y, "Fecha: DD/MM/AAAA")
+        y -= 20
+        c.drawString(25, y-5, "Remate")
+        c.drawString(75, y-5, "Recaudado")
+        c.drawString(140, y, "Propietario")
+        c.drawString(215, y, "Organizador")
+        c.drawString(295, y, "Rematador")
+        c.drawString(360, y, "Gastos Org.")
+        c.drawString(440, y, "A Pagar")
+        y -= 10
+        c.drawString(165, y, "10%")
+        c.drawString(240, y, "9%")
+        c.drawString(315, y, "2%")
+        c.drawString(380, y, "10%")
+        c.drawString(450, y, "69%")
+        y -= 5
+        xgridr = [20, 70, 135, 210, 290, 355, 430, 500]
+        ygridr = []
+        ygridr.append(y + 25)
+        for id in idrems:
+            nroRem = self.sess.execute("SELECT numero FROM remate WHERE id = :rem", {'rem':id[0]}).scalar()
+            ygridr.append(y)
+            y -= 15
+            c.drawString(25, y + 3.5, str(nroRem))
+            c.drawString(80, y + 3.5, "$999999")
+            c.drawString(150, y + 3.5, "$9999.00")
+            c.drawString(225, y + 3.5, "$9999.00")
+            c.drawString(300, y + 3.5, "$9999.00")
+            c.drawString(370, y + 3.5, "$9999.00")
+            c.drawString(440, y + 3.5, "$99999.00")
+
+        ygridr.append(y)
+        c.grid(xgridr, ygridr)
+
+        self.sess.close()
         c.save()
