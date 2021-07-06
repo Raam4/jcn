@@ -119,8 +119,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.actionImprimir_remates = QtWidgets.QAction(MainWindow)
         self.actionImprimir_remates.setObjectName("actionImprimir_remates")
+        self.actionImprimir_remates.triggered.connect(self.imprimeRemates)
+        
         self.actionImprimir_Carrera = QtWidgets.QAction(MainWindow)
-
         self.actionImprimir_Carrera.setObjectName("actionImprimir_Carrera")
         self.actionImprimir_Carrera.triggered.connect(self.imprimeCarrera)
 
@@ -661,7 +662,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.sess.execute("UPDATE carrera SET aRendir = :are, aPagar = :apa WHERE id = :car AND idReunion = :reu", {'are':totalARendir, 'apa':totalAPagar, 'car':idCar, 'reu':self.idReunion})
         
     def resetPdfVars(self):
-        self.fontPdf = "Helvetica"
+        self.fontPdf = "Courier"
         self.sizePdf = 10
         self.ydata = 820 #pos y de datos globales
         self.xdatalft = [20, 150, 220] #pos x de datos globales izq
@@ -672,14 +673,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.xgridlft = [20, 50, 200, 280] #eje x de lineas verticales de grid izq
         self.xgridrgt = [310, 340, 490, 570] #eje x de lineas verticales de grid der
     
-    def imprimeCarrera(self):
+    def imprimeRemates(self):
         self.resetPdfVars()
         idRems = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera}).fetchall()
         cantCabs = self.sess.execute("SELECT cantCaballos FROM carrera WHERE id = :car", {'car':self.idCarrera}).scalar()
         nombres = self.sess.execute("SELECT names FROM carrera WHERE id = :car", {'car':self.idCarrera}).fetchall()
         nombres = nombres[0][0].split(sep='|')
         i = 0
-        c = canvas.Canvas("pdf/carrera"+str(self.nroCarrera)+".pdf")
+        c = canvas.Canvas("pdfs/remates/remates_carrera_"+str(self.nroCarrera)+".pdf")
         c.setFont(self.fontPdf, self.sizePdf)
         #linea vertical
         c.saveState()
@@ -707,10 +708,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 xdata = self.xdatalft
                 xcab = self.xcablft
                 xgrid = self.xgridlft
+                xtot = 20
             else:
                 xdata = self.xdatargt
                 xcab = self.xcabrgt
                 xgrid = self.xgridrgt
+                xtot = 310
+            c.saveState()
+            c.setFont("Courier-Bold", 10)
             c.drawString(xdata[0], self.ydata, "Nro. de Remate: " + str(nroRem))
             c.drawString(xdata[1], self.ydata, "Carrera: " + str(self.nroCarrera))
             c.drawString(xdata[2], self.ydata, "dd/mm/aaaa")
@@ -718,6 +723,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             c.drawString(xcab[0], self.ydata + 3, "N°")
             c.drawString(xcab[1], self.ydata + 3, "Nombre")
             c.drawString(xcab[2], self.ydata + 3, "Monto")
+            c.restoreState()
             self.ygrid.append(self.ydata + 15)
             j = 0
             while(j<cantCabs):
@@ -729,13 +735,19 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 else:
                     c.drawString(xcab[0], self.ydata + 3, str(j))
                 c.drawString(xcab[1], self.ydata + 3, nombres[j-1])
-                monto = self.sess.execute("SELECT monto FROM caballo WHERE idRemate = :rem AND numero = :num", {'rem':nroRem, 'num':j}).scalar()
-                c.drawString(xcab[2] - 5, self.ydata + 3, "$" + str(monto))
+                monto = self.sess.execute("SELECT monto FROM caballo WHERE idRemate = :rem AND numero = :num", {'rem':id[0], 'num':j}).scalar()
+                if(monto is None):
+                    c.drawString(xcab[2] - 5, self.ydata + 3, "$0")
+                else:
+                    c.drawString(xcab[2] - 5, self.ydata + 3, "$" + str(monto))
             self.ygrid.append(self.ydata)
             c.grid(xgrid, self.ygrid)
             self.ygrid = []
             self.ydata -= 15
-            c.drawString(20, self.ydata, "Totales")
+            c.saveState()
+            c.setFont("Courier-Bold", 10)
+            c.drawString(xtot, self.ydata, "Totales")
+            c.restoreState()
             self.ydata -= 10
             if(i==0):
                 largo = start - self.ydata
@@ -752,4 +764,16 @@ class Ui_MainWindow(QtWidgets.QWidget):
             i += 1
         c.save()
 
-    
+    def imprimeCarrera(self):
+        idsrem = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
+        c = canvas.Canvas("pdfs/carreras/rendimiento_carrera_"+str(self.nroCarrera)+".pdf")
+        c.setFont("Courier-Bold", 10)
+        y = 820
+        c.drawString(20, y, "Carrera:" +str(self.idCarrera))
+        c.drawString(400, y, "Fecha: ")
+        y -= 15
+        c.drawString(20, y, "Nro Remate")
+        c.drawString(150, y, "Recaudado")
+        c.drawString(300, y, "Pagar")
+        c.drawString(450, y, "Rendir")
+        c.save()
