@@ -12,6 +12,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
     idRemate = None
     nroRemate = None
     cajaCarga = None
+    txt = ""
     sess = utils.bd()
     fec = datetime.date.today()
     try:
@@ -83,6 +84,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.bsubtotales = QtWidgets.QGroupBox(self.centralwidget)
         self.bsubtotales.setGeometry(QtCore.QRect(340, 50, 251, 111))
         self.bsubtotales.setObjectName("bsubtotales")
+
         self.subtotales = QtWidgets.QTextBrowser(self.bsubtotales)
         self.subtotales.setGeometry(QtCore.QRect(10, 20, 231, 81))
         self.subtotales.setObjectName("subtotales")
@@ -93,9 +95,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.whistorial = QtWidgets.QWidget(self.bhistorial)
         self.whistorial.setGeometry(QtCore.QRect(10, 20, 331, 371))
         self.whistorial.setObjectName("whistorial")
-        self.pdfHistorial = QtWidgets.QTextBrowser(self.whistorial)
-        self.pdfHistorial.setGeometry(QtCore.QRect(0, 0, 331, 371))
-        self.pdfHistorial.setObjectName("pdfHistorial")
+        self.txtHistorial = QtWidgets.QTextBrowser(self.whistorial)
+        self.txtHistorial.setGeometry(QtCore.QRect(0, 0, 331, 371))
+        self.txtHistorial.setObjectName("txtHistorial")
+
         MainWindow.setCentralWidget(self.centralwidget)
         #Barra Superior
         self.menuBar = QtWidgets.QMenuBar(MainWindow)
@@ -170,15 +173,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.veinteP.setText(_translate("Remates JCN", "20%"))
         self.treintaP.setText(_translate("Remates JCN", "30%"))
         self.bsubtotales.setTitle(_translate("Remates JCN", "Subtotales"))
-        self.subtotales.setHtml(_translate("Remates JCN", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-        "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-        "p, li { white-space: pre-wrap; }\n"
-        "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
-        "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:9pt; font-weight:600;\">Recaudado        $var</span></p>\n"
-        "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt; font-weight:600;\"><br /></p>\n"
-        "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:9pt; font-weight:600;\">A Pagar        $var</span></p>\n"
-        "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt; font-weight:600;\"><br /></p>\n"
-        "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:9pt; font-weight:600;\">A Rendir        $var</span></p></body></html>"))
         self.bhistorial.setTitle(_translate("Remates JCN", "Historial de Carga"))
         self.menuMen.setTitle(_translate("Remates JCN", "Parámetros"))
         self.menuAcciones.setTitle(_translate("Remates JCN", "Impresiones"))
@@ -491,19 +485,26 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.idRemate = self.sess.execute("SELECT id FROM remate WHERE ROWID IN ( SELECT max( ROWID ) FROM remate )").scalar() + 1
         except:
             self.idRemate = 1
+        self.txt += "<p style=\"font-size: 20px\">"
+        self.txt += "<b>Remate "+str(self.nroRemate)+"</b><br>"
         if(self.diezP.isChecked()):
             porc = 0.1
+            self.txt += "Porcentaje 10%"
         if(self.veinteP.isChecked()):
             porc = 0.2
+            self.txt += "Porcentaje 20%"
         if(self.treintaP.isChecked()):
             porc = 0.3
+            self.txt += "Porcentaje 30%"
         self.sess.execute("INSERT INTO remate(id, idCarrera, numero, porcentaje) VALUES (:val, :par, :var, :car)", {'val' : self.idRemate, 'par' : self.idCarrera, 'var' : self.nroRemate, 'car' : porc})
         for it in self.lines:
             self.rmt = it.text()
             if(self.rmt == ""):
                 self.rmt = None
+                self.txt += "<br>Caballo "+str(i)+" $0"
             else:
                 self.rmt = int(self.rmt)
+                self.txt += "<br>Caballo "+str(i)+" $"+str(self.rmt)
             try:
                 self.idCaballo = self.sess.execute("SELECT id FROM caballo WHERE ROWID IN (SELECT max(ROWID) FROM caballo)").scalar() + 1
             except:
@@ -516,23 +517,33 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.cuentasCarrera(self.idCarrera)
         self.sess.commit()
         self.sess.close()
+        self.txt += "</p><br>"
+        self.txtHistorial.append(self.txt)
+        self.txt = ""
         self.lremate.setText(str(self.nroRemate + 1))
 
     def updRemate(self):
         self.idRemate = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car AND numero = :rem", {'car' : self.idCarrera, 'rem' : self.nroRemate}).scalar()
+        self.txt += "<p style=\"font-size: 20px\">"
+        self.txt += "<b>Remate "+str(self.nroRemate)+"</b><br>"
         if(self.diezP.isChecked()):
             porc = 0.1
+            self.txt += "Porcentaje 10%"
         if(self.veinteP.isChecked()):
             porc = 0.2
+            self.txt += "Porcentaje 20%"
         if(self.treintaP.isChecked()):
             porc = 0.3
+            self.txt += "Porcentaje 30%"
         i = 1
         for it in self.lines:
             self.rmt = it.text()
             if(self.rmt == ""):
                 self.rmt = None
+                self.txt += "<br>Caballo "+str(i)+" $0"
             else:
                 self.rmt = int(self.rmt)
+                self.txt += "<br>Caballo "+str(i)+" $"+str(self.rmt)
             self.idCaballo = self.sess.execute("SELECT id FROM caballo WHERE idRemate = :rem AND numero = :num", {'rem' : self.idRemate, 'num' : i}).scalar()
             self.sess.execute("UPDATE caballo SET monto = :mon WHERE id = :cab", {'mon' : self.rmt, 'cab' : self.idCaballo})
             i+=1
@@ -544,10 +555,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.cuentasCarrera(self.idCarrera)
             self.sess.commit()
             self.sess.close()
+            self.txt += "</p><br>"
+            self.txtHistorial.append(self.txt)
+            self.txt = ""
             self.clearAll()
             self.lremate.setText(str(self.nroRemate + 1))
         else:
             self.sess.rollback()
+            self.txt = ""
             self.sess.close()
 
     def eliminador(self, _str):
@@ -718,7 +733,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             c.setFont("Courier-Bold", 10)
             c.drawString(xdata[0], self.ydata, "Remate " + str(nroRem))
             c.drawString(xdata[1], self.ydata, "Carrera " + str(self.nroCarrera))
-            c.drawString(xdata[2], self.ydata, "dd/mm/aaaa")
+            c.drawString(xdata[2], self.ydata, str(self.fec))
             self.ydata -= 22
             c.drawString(xcab[0], self.ydata + 3, "N°")
             c.drawString(xcab[1], self.ydata + 3, "Nombre")
@@ -766,12 +781,20 @@ class Ui_MainWindow(QtWidgets.QWidget):
         c.save()
 
     def imprimeCarrera(self):
+        recaudado = 0
+        total = 0
+        prop = 0
+        org = 0
+        rem = 0
+        gastos = 0
+        apagar = 0
         idrems = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
         c = canvas.Canvas("pdfs/carreras/rendimiento_carrera_"+str(self.nroCarrera)+".pdf")
         c.setFont("Courier-Bold", 10)
         y = 820
         c.drawString(20, y, "Carrera "+str(self.nroCarrera))
-        c.drawString(400, y, "Fecha: DD/MM/AAAA")
+        c.drawString(135, y, str(self.cantCaballos)+" caballos rematados")
+        c.drawString(400, y, "Fecha: "+str(self.fec))
         y -= 20
         c.drawString(25, y-5, "Remate")
         c.drawString(75, y-5, "Recaudado")
@@ -791,19 +814,37 @@ class Ui_MainWindow(QtWidgets.QWidget):
         ygridr = []
         ygridr.append(y + 25)
         for id in idrems:
-            nroRem = self.sess.execute("SELECT numero FROM remate WHERE id = :rem", {'rem':id[0]}).scalar()
+            dataRem = self.sess.execute("SELECT * FROM remate WHERE id = :rem", {'rem':id[0]}).fetchall()
+            recaudado = dataRem[0][4]
+            total += recaudado
+            prop += recaudado * 0.1
+            org += recaudado * 0.09
+            rem += recaudado * 0.02
+            gastos += recaudado * 0.1
+            apagar += recaudado * 0.69
             ygridr.append(y)
             y -= 15
-            c.drawString(25, y + 3.5, str(nroRem))
-            c.drawString(80, y + 3.5, "$999999")
-            c.drawString(150, y + 3.5, "$9999.00")
-            c.drawString(225, y + 3.5, "$9999.00")
-            c.drawString(300, y + 3.5, "$9999.00")
-            c.drawString(370, y + 3.5, "$9999.00")
-            c.drawString(440, y + 3.5, "$99999.00")
-
+            c.drawString(25, y + 3.5, str(dataRem[0][2]))
+            c.drawString(80, y + 3.5, "$"+str(dataRem[0][4]))
+            c.drawString(150, y + 3.5, "$"+str(round((recaudado * 0.1), 2)))
+            c.drawString(225, y + 3.5, "$"+str(round((recaudado * 0.09), 2)))
+            c.drawString(300, y + 3.5, "$"+str(round((recaudado * 0.02), 2)))
+            c.drawString(370, y + 3.5, "$"+str(round((recaudado * 0.1), 2)))
+            c.drawString(440, y + 3.5, "$"+str(round((recaudado * 0.69), 2)))
+        self.sess.close()
+        ygridr.append(y)
+        y -= 15
+        c.drawString(25, y + 3.5, "TOTALES")
+        c.drawString(80, y + 3.5, "$"+str(recaudado))
+        c.drawString(150, y + 3.5, "$"+str(prop))
+        c.drawString(225, y + 3.5, "$"+str(org))
+        c.drawString(300, y + 3.5, "$"+str(rem))
+        c.drawString(370, y + 3.5, "$"+str(gastos))
+        c.drawString(440, y + 3.5, "$"+str(apagar))
         ygridr.append(y)
         c.grid(xgridr, ygridr)
-
-        self.sess.close()
+        y -= 20
+        c.setFont("Courier-Bold", 12)
+        c.drawString(20, y, "TOTAL A RENDIR $"+str(total - apagar))
         c.save()
+
