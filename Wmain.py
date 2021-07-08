@@ -1,3 +1,4 @@
+from os import error
 import sys
 sys.path.append("./")
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -12,6 +13,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
     idRemate = None
     nroRemate = None
     cajaCarga = None
+    strNames = ""
     txt = ""
     sess = utils.bd()
     fec = datetime.date.today()
@@ -90,14 +92,23 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.subtotales.setObjectName("subtotales")
         #Box Historial
         self.bhistorial = QtWidgets.QGroupBox(self.centralwidget)
-        self.bhistorial.setGeometry(QtCore.QRect(240, 170, 351, 401))
+        self.bhistorial.setGeometry(QtCore.QRect(240, 170, 351, 340))
         self.bhistorial.setObjectName("bhistorial")
         self.whistorial = QtWidgets.QWidget(self.bhistorial)
-        self.whistorial.setGeometry(QtCore.QRect(10, 20, 331, 371))
+        self.whistorial.setGeometry(QtCore.QRect(10, 20, 331, 310))
         self.whistorial.setObjectName("whistorial")
         self.txtHistorial = QtWidgets.QTextBrowser(self.whistorial)
-        self.txtHistorial.setGeometry(QtCore.QRect(0, 0, 331, 371))
+        self.txtHistorial.setGeometry(QtCore.QRect(0, 0, 331, 310))
         self.txtHistorial.setObjectName("txtHistorial")
+        #Botón Fin Carrera
+        self.finCarreraBtn = QtWidgets.QPushButton(self.centralwidget)
+        self.finCarreraBtn.setGeometry(QtCore.QRect(240, 520, 350, 50))
+        fontend = QtGui.QFont()
+        fontend.setBold(True)
+        fontend.setWeight(75)
+        self.finCarreraBtn.setFont(fontend)
+        self.finCarreraBtn.setObjectName("finCarreraBtn")
+        self.finCarreraBtn.clicked.connect(self.finCarrera)
 
         MainWindow.setCentralWidget(self.centralwidget)
         #Barra Superior
@@ -161,7 +172,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
-        
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -174,6 +184,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.treintaP.setText(_translate("Remates JCN", "30%"))
         self.bsubtotales.setTitle(_translate("Remates JCN", "Subtotales"))
         self.bhistorial.setTitle(_translate("Remates JCN", "Historial de Carga"))
+        self.finCarreraBtn.setText(_translate("Remates JCN", "Finalizar Carrera"))
         self.menuMen.setTitle(_translate("Remates JCN", "Parámetros"))
         self.menuAcciones.setTitle(_translate("Remates JCN", "Impresiones"))
         self.menuEdicion.setTitle(_translate("Remates JCN", "Edición"))
@@ -352,13 +363,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     def saveNames(self):
         i = 0
-        strNames = ""
+        self.strNames = ""
         while(i<len(self.cabsNames)):
-            strNames += self.cabsNames[i].text()
+            nombre = self.cabsNames[i].text()
+            if(nombre != ""):
+                self.strNames += nombre
+            else:
+                self.strNames += "Sin nombre"
             if(i!=len(self.cabsNames)-1):
-                strNames += "|"
+                self.strNames += "|"
             i += 1
-        self.sess.execute("UPDATE carrera SET names = :nom WHERE id = :car", {'nom':strNames, 'car':self.idCarrera})
+        self.sess.execute("UPDATE carrera SET names = :nom WHERE id = :car", {'nom':self.strNames, 'car':self.idCarrera})
         self.sess.commit()
         self.sess.close()
 
@@ -368,8 +383,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         elif(self.cantCaballos==3):
             self.veinteP.setChecked(True)
         else:
-            self.treintaP.setChecked(True)
-        
+            self.treintaP.setChecked(True)   
 
     def boxCarga(self):
         self.caja = QtWidgets.QGroupBox(self.centralwidget)
@@ -481,6 +495,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     def save(self):
         i = 1
+        noms = self.sess.execute("SELECT names FROM carrera WHERE id = :car", {'car':self.idCarrera}).fetchall()
+        print(noms)
+        noms = noms[0][0].split(sep='|')
         try:
             self.idRemate = self.sess.execute("SELECT id FROM remate WHERE ROWID IN ( SELECT max( ROWID ) FROM remate )").scalar() + 1
         except:
@@ -501,10 +518,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.rmt = it.text()
             if(self.rmt == ""):
                 self.rmt = None
-                self.txt += "<br>Caballo "+str(i)+" $0"
+                self.txt += "<br>"+noms[i-1]+"("+str(i)+") $0"
             else:
                 self.rmt = int(self.rmt)
-                self.txt += "<br>Caballo "+str(i)+" $"+str(self.rmt)
+                self.txt += "<br>"+noms[i-1]+"("+str(i)+") $"+str(self.rmt)
             try:
                 self.idCaballo = self.sess.execute("SELECT id FROM caballo WHERE ROWID IN (SELECT max(ROWID) FROM caballo)").scalar() + 1
             except:
@@ -523,9 +540,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.lremate.setText(str(self.nroRemate + 1))
 
     def updRemate(self):
+        noms = self.sess.execute("SELECT names FROM carrera WHERE id = :car", {'car':self.idCarrera}).fetchall()
+        noms = noms[0][0].split(sep='|')
         self.idRemate = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car AND numero = :rem", {'car' : self.idCarrera, 'rem' : self.nroRemate}).scalar()
         self.txt += "<p style=\"font-size: 20px\">"
-        self.txt += "<b>Remate "+str(self.nroRemate)+"</b><br>"
+        self.txt += "<b>Remate "+str(self.nroRemate)+"</b>(Actualizado)<br>"
         if(self.diezP.isChecked()):
             porc = 0.1
             self.txt += "Porcentaje 10%"
@@ -540,10 +559,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.rmt = it.text()
             if(self.rmt == ""):
                 self.rmt = None
-                self.txt += "<br>Caballo "+str(i)+" $0"
+                self.txt += "<br>"+noms[i-1]+"("+str(i)+") $0"
             else:
                 self.rmt = int(self.rmt)
-                self.txt += "<br>Caballo "+str(i)+" $"+str(self.rmt)
+                self.txt += "<br>"+noms[i-1]+"("+str(i)+") $"+str(self.rmt)
             self.idCaballo = self.sess.execute("SELECT id FROM caballo WHERE idRemate = :rem AND numero = :num", {'rem' : self.idRemate, 'num' : i}).scalar()
             self.sess.execute("UPDATE caballo SET monto = :mon WHERE id = :cab", {'mon' : self.rmt, 'cab' : self.idCaballo})
             i+=1
@@ -848,3 +867,31 @@ class Ui_MainWindow(QtWidgets.QWidget):
         c.drawString(20, y, "TOTAL A RENDIR $"+str(total - apagar))
         c.save()
 
+    def finCarrera(self):
+        msg = QtWidgets.QMessageBox.question(self, "Finalizar", "Desea finalizar esta carrera?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        if msg == QtWidgets.QMessageBox.Yes:
+            try:
+                self.imprimeRemates()
+                self.imprimeCarrera()
+                msg = QtWidgets.QMessageBox.question(self, "Crear o cerrar", "Desea crear una nueva carrera?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+                if msg == QtWidgets.QMessageBox.Yes:
+                    self.crear()
+                else:
+                    self.idCarrera = None
+                    self.nroCarrera = None
+                    self.cantCaballos = None
+                    self.idRemate = None
+                    self.nroRemate = None
+                    self.cajaCarga.close()
+                    self.cajaCarga = None
+                    self.txt = ""
+                    self.strNames = ""
+                    self.xy.setText("")
+                    self.dialogCarrera()
+            except Exception as e:
+                if(e):
+                    QtWidgets.QMessageBox.about(self, "Atención", "No hay ninguna carrera seleccionada.")
+                else:
+                    QtWidgets.QMessageBox.about(self, "Atención", "Recuerde cerrar los pdf's abiertos.")
+        else:
+            pass
