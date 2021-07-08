@@ -86,7 +86,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.bsubtotales = QtWidgets.QGroupBox(self.centralwidget)
         self.bsubtotales.setGeometry(QtCore.QRect(340, 50, 251, 111))
         self.bsubtotales.setObjectName("bsubtotales")
-
         self.subtotales = QtWidgets.QTextBrowser(self.bsubtotales)
         self.subtotales.setGeometry(QtCore.QRect(10, 20, 231, 81))
         self.subtotales.setObjectName("subtotales")
@@ -496,7 +495,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def save(self):
         i = 1
         noms = self.sess.execute("SELECT names FROM carrera WHERE id = :car", {'car':self.idCarrera}).fetchall()
-        print(noms)
         noms = noms[0][0].split(sep='|')
         try:
             self.idRemate = self.sess.execute("SELECT id FROM remate WHERE ROWID IN ( SELECT max( ROWID ) FROM remate )").scalar() + 1
@@ -518,10 +516,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.rmt = it.text()
             if(self.rmt == ""):
                 self.rmt = None
-                self.txt += "<br>"+noms[i-1]+"("+str(i)+") $0"
+                self.txt += "<br>"+str(i)+")"+noms[i-1]+" ---> $0"
             else:
                 self.rmt = int(self.rmt)
-                self.txt += "<br>"+noms[i-1]+"("+str(i)+") $"+str(self.rmt)
+                self.txt += "<br>"+str(i)+")"+noms[i-1]+" ---> $"+str(self.rmt)
             try:
                 self.idCaballo = self.sess.execute("SELECT id FROM caballo WHERE ROWID IN (SELECT max(ROWID) FROM caballo)").scalar() + 1
             except:
@@ -544,7 +542,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         noms = noms[0][0].split(sep='|')
         self.idRemate = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car AND numero = :rem", {'car' : self.idCarrera, 'rem' : self.nroRemate}).scalar()
         self.txt += "<p style=\"font-size: 20px\">"
-        self.txt += "<b>Remate "+str(self.nroRemate)+"</b>(Actualizado)<br>"
+        self.txt += "<b>Remate "+str(self.nroRemate)+"</b> (Actualizado)<br>"
         if(self.diezP.isChecked()):
             porc = 0.1
             self.txt += "Porcentaje 10%"
@@ -559,10 +557,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.rmt = it.text()
             if(self.rmt == ""):
                 self.rmt = None
-                self.txt += "<br>"+noms[i-1]+"("+str(i)+") $0"
+                self.txt += "<br>"+str(i)+")"+noms[i-1]+" ---> $0"
             else:
                 self.rmt = int(self.rmt)
-                self.txt += "<br>"+noms[i-1]+"("+str(i)+") $"+str(self.rmt)
+                self.txt += "<br>"+str(i)+")"+noms[i-1]+" ---> $"+str(self.rmt)
             self.idCaballo = self.sess.execute("SELECT id FROM caballo WHERE idRemate = :rem AND numero = :num", {'rem' : self.idRemate, 'num' : i}).scalar()
             self.sess.execute("UPDATE caballo SET monto = :mon WHERE id = :cab", {'mon' : self.rmt, 'cab' : self.idCaballo})
             i+=1
@@ -689,11 +687,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.sess.execute("UPDATE remate SET aPagar = :apa, aRendir = :are WHERE idCarrera = :car AND id = :rem", {'apa':aPagar, 'are':aRendir, 'car':idCar, 'rem':idRem})
        
     def cuentasCarrera(self, idCar):
+        rems = self.sess.execute("SELECT COUNT(*) FROM remate WHERE idCarrera = :car", {'car':idCar}).scalar()
         totalCarrera = self.sess.execute("SELECT SUM(total) FROM remate WHERE idCarrera = :car", {'car':idCar}).scalar()
         self.sess.execute("UPDATE carrera SET total = :tot WHERE id = :car", {'tot':totalCarrera, 'car':idCar})
         totalAPagar = self.sess.execute("SELECT SUM(aPagar) FROM remate WHERE idCarrera = :car", {'car':idCar}).scalar()
         totalARendir = self.sess.execute("SELECT SUM(aRendir) FROM remate WHERE idCarrera = :car", {'car':idCar}).scalar()
         self.sess.execute("UPDATE carrera SET aRendir = :are, aPagar = :apa WHERE id = :car AND idReunion = :reu", {'are':totalARendir, 'apa':totalAPagar, 'car':idCar, 'reu':self.idReunion})
+        self.subtotales.setText("<b>"+str(rems)+" Remates - Total $"+str(totalCarrera)+"</b><br><br><b>A Rendir</b> $"+str(round(totalARendir, 2))+"<br><br><b>A Pagar</b> $"+str(round(totalAPagar, 2)))
         
     def resetPdfVars(self):
         self.fontPdf = "Courier"
@@ -884,9 +884,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     self.nroRemate = None
                     self.cajaCarga.close()
                     self.cajaCarga = None
-                    self.txt = ""
                     self.strNames = ""
                     self.xy.setText("")
+                    self.subtotales.setText("")
+                    self.txtHistorial.setText("")
                     self.dialogCarrera()
             except Exception as e:
                 if(e):
@@ -895,3 +896,4 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     QtWidgets.QMessageBox.about(self, "Atención", "Recuerde cerrar los pdf's abiertos.")
         else:
             pass
+
