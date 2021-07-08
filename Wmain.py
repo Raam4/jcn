@@ -854,17 +854,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
         ygridr.append(y)
         y -= 15
         c.drawString(25, y + 3.5, "TOTALES")
-        c.drawString(80, y + 3.5, "$"+str(recaudado))
-        c.drawString(150, y + 3.5, "$"+str(prop))
-        c.drawString(225, y + 3.5, "$"+str(org))
-        c.drawString(300, y + 3.5, "$"+str(rem))
-        c.drawString(370, y + 3.5, "$"+str(gastos))
-        c.drawString(440, y + 3.5, "$"+str(apagar))
+        c.drawString(80, y + 3.5, "$"+str(round(recaudado, 2)))
+        c.drawString(150, y + 3.5, "$"+str(round(prop, 2)))
+        c.drawString(225, y + 3.5, "$"+str(round(org, 2)))
+        c.drawString(300, y + 3.5, "$"+str(round(rem, 2)))
+        c.drawString(370, y + 3.5, "$"+str(round(gastos, 2)))
+        c.drawString(440, y + 3.5, "$"+str(round(apagar, 2)))
         ygridr.append(y)
         c.grid(xgridr, ygridr)
         y -= 20
         c.setFont("Courier-Bold", 12)
-        c.drawString(20, y, "TOTAL A RENDIR $"+str(total - apagar))
+        c.drawString(20, y, "TOTAL A RENDIR $"+str(round(total - apagar, 2)))
         c.save()
 
     def finCarrera(self):
