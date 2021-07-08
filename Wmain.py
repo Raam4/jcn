@@ -278,8 +278,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.xy.setText(str(self.nroCarrera))
 
     def seleccion(self, text):
-        self.idCarrera = self.sess.execute("SELECT id FROM carrera WHERE idReunion = :val AND numero=:par", {'val' : self.idReunion, 'par' : text}).scalar()
+        qry = self.sess.execute("SELECT * FROM carrera WHERE idReunion = :val AND numero=:par", {'val' : self.idReunion, 'par' : text}).fetchall()
+        self.idCarrera = qry[0][0]
+        rems = self.sess.execute("SELECT COUNT(*) FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
         self.nroCarrera = int(text)
+        totalCarrera = qry[0][4]
+        if(totalCarrera is not None):
+            totalARendir = qry[0][6]
+            totalAPagar = qry[0][5]
+            self.subtotales.setText("<b>"+str(rems)+" Remates - Total $"+str(totalCarrera)+"</b><br><br><b>A Rendir</b> $"+str(round(totalARendir, 2))+"<br><br><b>A Pagar</b> $"+str(round(totalAPagar, 2)))
+        else:
+            self.subtotales.setText("<b>Aún no se cargaron remates</b>")
         try:
             self.cantCaballos = self.sess.execute("SELECT cantCaballos FROM carrera WHERE id = :id", {'id' : self.idCarrera}).scalar()
             self.showCaja()
@@ -668,16 +677,31 @@ class Ui_MainWindow(QtWidgets.QWidget):
         if(qry is None):
             QtWidgets.QMessageBox.about(self, "Remate", "La carrera no existe")
         else:
-            self.sess.execute("DELETE FROM caballo WHERE idCarrera = :car", {'car':car})
-            self.sess.execute("DELETE FROM remate WHERE idCarrera = :car", {'car':car})
-            self.sess.execute("DELETE FROM carrera WHERE id = :car", {'car':car})
+            self.sess.execute("DELETE FROM caballo WHERE idCarrera = :car", {'car':qry})
+            self.sess.execute("DELETE FROM remate WHERE idCarrera = :car", {'car':qry})
+            self.sess.execute("DELETE FROM carrera WHERE id = :car", {'car':qry})
             msg = QtWidgets.QMessageBox.question(self, "Eliminar", "La carrera y todos sus remates se eliminarán, proceder?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
             if msg == QtWidgets.QMessageBox.Yes:
                 self.sess.commit()
+                if(qry == self.idCarrera):
+                    self.idCarrera = None
+                    self.nroCarrera = None
+                    self.cantCaballos = None
+                    self.idRemate = None
+                    self.nroRemate = None
+                    self.cajaCarga.close()
+                    self.cajaCarga = None
+                    self.strNames = ""
+                    self.xy.setText("")
+                    self.subtotales.setText("")
+                    self.txtHistorial.setText("")
+                    self.sess.close()
+                    self.elimina.close()
+                    self.dialogCarrera()
             else:
                 self.sess.rollback()
-        self.sess.close()
-        self.elimina.close()
+                self.sess.close()
+                self.elimina.close()
 
     def cuentasRemate(self, idCar, idRem):
         totalRemate = self.sess.execute("SELECT total FROM remate WHERE idCarrera = :car AND id = :rem", {'car':idCar, 'rem':idRem}).scalar()
