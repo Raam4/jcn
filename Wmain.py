@@ -467,6 +467,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         font.setWeight(75)
         self.guardar.setFont(font)
         self.guardar.setObjectName("guardar")
+        self.guardar.setAutoDefault(True)
         self.guardar.clicked.connect(self.saveOrUpd)
         self.retranslate_2()
         QtCore.QMetaObject.connectSlotsByName(self.caja)
@@ -503,6 +504,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.clearAll()
 
     def save(self):
+        self.lines[0].setFocus()
         i = 1
         noms = self.sess.execute("SELECT names FROM carrera WHERE id = :car", {'car':self.idCarrera}).fetchall()
         noms = noms[0][0].split(sep='|')
