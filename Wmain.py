@@ -747,7 +747,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         largo = 0
         for id in idRems:
             nroRem = self.sess.execute("SELECT numero FROM remate WHERE id = :rem", {'rem':id[0]}).scalar()
-            porc = self.sess.execute("SELECT porcentaje FROM remate WHERE id = :rem", {'rem':id[0]}).scalar()
             start = self.ydata
             self.ygrid = []
             if(start - largo < 0):
@@ -801,16 +800,21 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     c.drawString(xcab[2] - 5, self.ydata + 3, "$0")
                 else:
                     c.drawString(xcab[2] - 5, self.ydata + 3, "$" + str(monto))
+            montos = self.sess.execute("SELECT total, aPagar, aRendir FROM remate WHERE id = :rem", {'rem':id[0]}).fetchall()
+            total = montos[0][0]
+            apagar = montos[0][1]
+            arendir = montos[0][2]
             self.ygrid.append(self.ydata)
             c.grid(xgrid, self.ygrid)
             self.ygrid = []
             self.ydata -= 15
-            desc = monto * porc
-            c.drawString(xtot, self.ydata, "Descuentos: $" + str(round(desc, 2)))
+            c.drawString(xtot, self.ydata, "Total Remate: $" + str(round(total, 2)))
+            self.ydata -= 15
+            c.drawString(xtot, self.ydata, "Descuentos: $" + str(round(arendir, 2)))
             c.saveState()
             c.setFont("Courier-Bold", 11)
             self.ydata -= 15
-            c.drawString(xtot, self.ydata, "TOTAL A PAGAR: $" + str(round((monto - desc), 2)))
+            c.drawString(xtot, self.ydata, "TOTAL A PAGAR: $" + str(round(apagar, 2)))
             c.restoreState()
             self.ydata -= 10
             if(i==0):
@@ -857,11 +861,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         for id in idrems:
             dataRem = self.sess.execute("SELECT * FROM remate WHERE id = :rem", {'rem':id[0]}).fetchall()
             recaudado = dataRem[0][4]
+            porc = dataRem[0][3]
             tresP = (recaudado * 0.03)
             total += recaudado
             adm += tresP
+            sub = recaudado - tresP
             subtotal += recaudado - tresP
-            descuento += dataRem[0][6]
+            descuento += sub * porc
             apagar += dataRem[0][5]
             ygridr.append(y)
             y -= 15
@@ -869,7 +875,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             c.drawString(90, y + 3.5, "$"+str(dataRem[0][4]))
             c.drawString(160, y + 3.5, "$"+str(round((recaudado * 0.03), 2)))
             c.drawString(225, y + 3.5, "$"+str(round((recaudado - tresP), 2)))
-            c.drawString(305, y + 3.5, "$"+str(round(dataRem[0][6], 2)))
+            c.drawString(305, y + 3.5, "$"+str(round((sub * porc), 2)))
             c.drawString(380, y + 3.5, "$"+str(round(dataRem[0][5], 2)))
         self.sess.close()
         ygridr.append(y)
@@ -878,13 +884,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         c.drawString(90, y + 3.5, "$"+str(round(total, 2)))
         c.drawString(160, y + 3.5, "$"+str(round(adm, 2)))
         c.drawString(225, y + 3.5, "$"+str(round(subtotal, 2)))
-        c.drawString(310, y + 3.5, "$"+str(round(descuento, 2)))
+        c.drawString(305, y + 3.5, "$"+str(round(descuento, 2)))
         c.drawString(380, y + 3.5, "$"+str(round(apagar, 2)))
         ygridr.append(y)
         c.grid(xgridr, ygridr)
         y -= 20
         c.setFont("Courier-Bold", 12)
-        c.drawString(20, y, "TOTAL A RENDIR $"+str(round(subtotal - apagar, 2)))
+        c.drawString(20, y, "TOTAL A RENDIR $"+str(round(total - apagar, 2)))
         c.save()
 
     def finCarrera(self):
