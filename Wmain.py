@@ -139,9 +139,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionImprimir_Carrera.setObjectName("actionImprimir_Carrera")
         self.actionImprimir_Carrera.triggered.connect(self.imprimeCarrera)
 
-        self.actionImprimir_Reunion = QtWidgets.QAction(MainWindow)
-        self.actionImprimir_Reunion.setObjectName("actionImprimir_Reunion")
-
         self.actionEliminar_Caballo = QtWidgets.QAction(MainWindow)
         self.actionEliminar_Caballo.setObjectName("actionEliminar_Caballo")
         self.actionEliminar_Caballo.triggered.connect(lambda: self.eliminador('cab'))
@@ -162,7 +159,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuMen.addAction(self.actionSalir)
         self.menuAcciones.addAction(self.actionImprimir_remates)
         self.menuAcciones.addAction(self.actionImprimir_Carrera)
-        self.menuAcciones.addAction(self.actionImprimir_Reunion)
         self.menuEdicion.addAction(self.actionEliminar_Caballo)
         self.menuEdicion.addAction(self.actionEliminar_Remate)
         self.menuEdicion.addAction(self.actionEliminar_Carrera)
@@ -192,7 +188,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionCaballos.setText(_translate("Remates JCN", "Caballos"))
         self.actionImprimir_remates.setText(_translate("Remates JCN", "Imprimir Remates"))
         self.actionImprimir_Carrera.setText(_translate("Remates JCN", "Imprimir Carrera"))
-        self.actionImprimir_Reunion.setText(_translate("Remates JCN", "Imprimir Reunión"))
         self.actionEliminar_Remate.setText(_translate("Remates JCN", "Eliminar Remate"))
         self.actionEliminar_Caballo.setText(_translate("Remates JCN", "Eliminar Caballo"))
         self.actionEliminar_Carrera.setText(_translate("Remates JCN", "Eliminar Carrera"))
