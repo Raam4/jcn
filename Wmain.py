@@ -1,4 +1,5 @@
 from os import error
+from re import sub
 import sys
 sys.path.append("./")
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -723,8 +724,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.fontPdf = "Courier"
         self.sizePdf = 10
         self.ydata = 820 #pos y de datos globales
-        self.xdatalft = [20, 130, 220] #pos x de datos globales izq
-        self.xdatargt = [310, 420, 510] #pos x de datos globalez der
+        self.xdatalft = [20, 105, 220] #pos x de datos globales izq
+        self.xdatargt = [310, 395, 510] #pos x de datos globalez der
         self.xcablft = [30, 55, 225] #pos x cabecera de tabla izq
         self.xcabrgt = [320, 345, 515] #pos x cabecera de tabla der
         self.ygrid = [] #eje y de primera linea de los grid
@@ -763,19 +764,23 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 c.restoreState()
                 #fin linea vertical
             if(i%2==0):
+                xtop = 95
                 xdata = self.xdatalft
                 xcab = self.xcablft
                 xgrid = self.xgridlft
                 xtot = 20
             else:
+                xtop = 385
                 xdata = self.xdatargt
                 xcab = self.xcabrgt
                 xgrid = self.xgridrgt
                 xtot = 310
             c.saveState()
             c.setFont("Courier-Bold", 10)
-            c.drawString(xdata[0], self.ydata, "Remate " + str(nroRem))
-            c.drawString(xdata[1], self.ydata, "Carrera " + str(self.nroCarrera))
+            c.drawString(xtop, self.ydata, "Mesa de Remates N° 2")
+            self.ydata -= 15
+            c.drawString(xdata[0], self.ydata, "Carrera " + str(self.nroCarrera) + "  //")
+            c.drawString(xdata[1], self.ydata, "Remate N°" + str(nroRem))
             c.drawString(xdata[2], self.ydata, str(self.fec))
             self.ydata -= 22
             c.drawString(xcab[0], self.ydata + 3, "N°")
@@ -802,9 +807,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
             c.grid(xgrid, self.ygrid)
             self.ygrid = []
             self.ydata -= 15
+            c.drawString(xtot, self.ydata, "Descuento comisión: $1234.56")
             c.saveState()
-            c.setFont("Courier-Bold", 10)
-            c.drawString(xtot, self.ydata, "Totales")
+            c.setFont("Courier-Bold", 11)
+            self.ydata -= 15
+            c.drawString(xtot, self.ydata, "TOTAL A PAGAR: $1234.56")
             c.restoreState()
             self.ydata -= 10
             if(i==0):
@@ -826,69 +833,59 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def imprimeCarrera(self):
         recaudado = 0
         total = 0
-        prop = 0
-        org = 0
-        rem = 0
-        gastos = 0
+        adm = 0
+        subtotal = 0
+        descuento = 0
         apagar = 0
         idrems = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
         c = canvas.Canvas("pdfs/carreras/rendimiento_carrera_"+str(self.nroCarrera)+".pdf")
         c.setFont("Courier-Bold", 10)
         y = 820
-        c.drawString(20, y, "Carrera "+str(self.nroCarrera))
-        c.drawString(135, y, str(self.cantCaballos)+" caballos rematados")
-        c.drawString(400, y, "Fecha: "+str(self.fec))
+        c.drawString(20, y, "Carrera "+str(self.nroCarrera) + " //")
+        c.drawString(100, y, "Mesa de Remate N° 2")
+        c.drawString(340, y, "Fecha: "+str(self.fec))
         y -= 20
-        c.drawString(25, y-5, "Remate")
-        c.drawString(75, y-5, "Recaudado")
-        c.drawString(140, y, "Propietario")
-        c.drawString(215, y, "Organizador")
-        c.drawString(295, y, "Rematador")
-        c.drawString(360, y, "Gastos Org.")
-        c.drawString(440, y, "A Pagar")
+        c.drawString(25, y, "Remate")
+        c.drawString(75, y, "Recaudado")
+        c.drawString(155, y, "Adm")
+        c.drawString(225, y, "Subtotal")
+        c.drawString(305, y, "Descuento")
+        c.drawString(380, y, "A Pagar")
         y -= 10
-        c.drawString(165, y, "10%")
-        c.drawString(240, y, "9%")
-        c.drawString(315, y, "2%")
-        c.drawString(380, y, "10%")
-        c.drawString(450, y, "69%")
-        y -= 5
-        xgridr = [20, 70, 135, 210, 290, 355, 430, 500]
+        xgridr = [20, 70, 135, 210, 290, 365, 440]
         ygridr = []
         ygridr.append(y + 25)
         for id in idrems:
             dataRem = self.sess.execute("SELECT * FROM remate WHERE id = :rem", {'rem':id[0]}).fetchall()
             recaudado = dataRem[0][4]
+            tresP = (recaudado * 0.03)
             total += recaudado
-            prop += recaudado * 0.1
-            org += recaudado * 0.09
-            rem += recaudado * 0.02
-            gastos += recaudado * 0.1
-            apagar += recaudado * 0.69
+            adm += tresP
+            subtotal += recaudado - tresP
+            descuento += (recaudado - tresP) * 0.3
+            apagar += (recaudado - tresP) * 0.7
             ygridr.append(y)
             y -= 15
             c.drawString(25, y + 3.5, str(dataRem[0][2]))
             c.drawString(80, y + 3.5, "$"+str(dataRem[0][4]))
-            c.drawString(150, y + 3.5, "$"+str(round((recaudado * 0.1), 2)))
-            c.drawString(225, y + 3.5, "$"+str(round((recaudado * 0.09), 2)))
-            c.drawString(300, y + 3.5, "$"+str(round((recaudado * 0.02), 2)))
-            c.drawString(370, y + 3.5, "$"+str(round((recaudado * 0.1), 2)))
-            c.drawString(440, y + 3.5, "$"+str(round((recaudado * 0.69), 2)))
+            c.drawString(150, y + 3.5, "$"+str(round((recaudado * 0.03), 2)))
+            c.drawString(225, y + 3.5, "$"+str(round((recaudado - tresP), 2)))
+            c.drawString(310, y + 3.5, "$"+str(round(((recaudado - tresP) * 0.3), 2)))
+            c.drawString(380, y + 3.5, "$"+str(round(((recaudado - tresP) * 0.7), 2)))
         self.sess.close()
         ygridr.append(y)
         y -= 15
         c.drawString(25, y + 3.5, "TOTALES")
-        c.drawString(80, y + 3.5, "$"+str(round(recaudado, 2)))
-        c.drawString(150, y + 3.5, "$"+str(round(prop, 2)))
-        c.drawString(225, y + 3.5, "$"+str(round(org, 2)))
-        c.drawString(300, y + 3.5, "$"+str(round(rem, 2)))
-        c.drawString(370, y + 3.5, "$"+str(round(gastos, 2)))
-        c.drawString(440, y + 3.5, "$"+str(round(apagar, 2)))
+        c.drawString(80, y + 3.5, "$"+str(round(total, 2)))
+        c.drawString(150, y + 3.5, "$"+str(round(adm, 2)))
+        c.drawString(225, y + 3.5, "$"+str(round(subtotal, 2)))
+        c.drawString(310, y + 3.5, "$"+str(round(descuento, 2)))
+        c.drawString(380, y + 3.5, "$"+str(round(apagar, 2)))
         ygridr.append(y)
         c.grid(xgridr, ygridr)
         y -= 20
         c.setFont("Courier-Bold", 12)
-        c.drawString(20, y, "TOTAL A RENDIR $"+str(round(total - apagar, 2)))
+        c.drawString(20, y, "TOTAL A RENDIR $"+str(round(subtotal - apagar, 2)))
         c.save()
 
     def finCarrera(self):
