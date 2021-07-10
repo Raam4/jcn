@@ -515,13 +515,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.txt += "<p style=\"font-size: 20px\">"
         self.txt += "<b>Remate "+str(self.nroRemate)+"</b><br>"
         if(self.diezP.isChecked()):
-            porc = 0.1
+            porc = 0.127
             self.txt += "Porcentaje 10%"
         if(self.veinteP.isChecked()):
-            porc = 0.2
+            porc = 0.224
             self.txt += "Porcentaje 20%"
         if(self.treintaP.isChecked()):
-            porc = 0.3
+            porc = 0.321
             self.txt += "Porcentaje 30%"
         self.sess.execute("INSERT INTO remate(id, idCarrera, numero, porcentaje) VALUES (:val, :par, :var, :car)", {'val' : self.idRemate, 'par' : self.idCarrera, 'var' : self.nroRemate, 'car' : porc})
         for it in self.lines:
@@ -709,8 +709,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def cuentasRemate(self, idCar, idRem):
         totalRemate = self.sess.execute("SELECT total FROM remate WHERE idCarrera = :car AND id = :rem", {'car':idCar, 'rem':idRem}).scalar()
         porc = self.sess.execute("SELECT porcentaje FROM remate WHERE idCarrera = :car AND id = :rem", {'car':idCar, 'rem':idRem}).scalar()
-        aPagar = totalRemate * (1-porc)
-        aRendir = totalRemate - aPagar
+        aRendir = totalRemate * porc
+        aPagar = totalRemate - aRendir
         self.sess.execute("UPDATE remate SET aPagar = :apa, aRendir = :are WHERE idCarrera = :car AND id = :rem", {'apa':aPagar, 'are':aRendir, 'car':idCar, 'rem':idRem})
        
     def cuentasCarrera(self, idCar):
@@ -752,6 +752,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         largo = 0
         for id in idRems:
             nroRem = self.sess.execute("SELECT numero FROM remate WHERE id = :rem", {'rem':id[0]}).scalar()
+            porc = self.sess.execute("SELECT porcentaje FROM remate WHERE id = :rem", {'rem':id[0]}).scalar()
             start = self.ydata
             self.ygrid = []
             if(start - largo < 0):
@@ -809,11 +810,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
             c.grid(xgrid, self.ygrid)
             self.ygrid = []
             self.ydata -= 15
-            c.drawString(xtot, self.ydata, "Descuento comisión: $1234.56")
+            desc = monto * porc
+            c.drawString(xtot, self.ydata, "Descuentos: $" + str(round(desc, 2)))
             c.saveState()
             c.setFont("Courier-Bold", 11)
             self.ydata -= 15
-            c.drawString(xtot, self.ydata, "TOTAL A PAGAR: $1234.56")
+            c.drawString(xtot, self.ydata, "TOTAL A PAGAR: $" + str(round((monto - desc), 2)))
             c.restoreState()
             self.ydata -= 10
             if(i==0):
@@ -847,14 +849,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
         c.drawString(100, y, "Mesa de Remate N° 2")
         c.drawString(340, y, "Fecha: "+str(self.fec))
         y -= 20
-        c.drawString(25, y, "Remate")
-        c.drawString(75, y, "Recaudado")
-        c.drawString(155, y, "Adm")
+        c.drawString(25, y, "N° Remate")
+        c.drawString(85, y, "Recaudado")
+        c.drawString(165, y, "Adm")
         c.drawString(225, y, "Subtotal")
-        c.drawString(305, y, "Descuento")
+        c.drawString(300, y, "Descuentos")
         c.drawString(380, y, "A Pagar")
         y -= 10
-        xgridr = [20, 70, 135, 210, 290, 365, 440]
+        xgridr = [20, 80, 145, 210, 290, 365, 440]
         ygridr = []
         ygridr.append(y + 25)
         for id in idrems:
@@ -864,22 +866,22 @@ class Ui_MainWindow(QtWidgets.QWidget):
             total += recaudado
             adm += tresP
             subtotal += recaudado - tresP
-            descuento += (recaudado - tresP) * 0.3
-            apagar += (recaudado - tresP) * 0.7
+            descuento += dataRem[0][6]
+            apagar += dataRem[0][5]
             ygridr.append(y)
             y -= 15
             c.drawString(25, y + 3.5, str(dataRem[0][2]))
-            c.drawString(80, y + 3.5, "$"+str(dataRem[0][4]))
-            c.drawString(150, y + 3.5, "$"+str(round((recaudado * 0.03), 2)))
+            c.drawString(90, y + 3.5, "$"+str(dataRem[0][4]))
+            c.drawString(160, y + 3.5, "$"+str(round((recaudado * 0.03), 2)))
             c.drawString(225, y + 3.5, "$"+str(round((recaudado - tresP), 2)))
-            c.drawString(310, y + 3.5, "$"+str(round(((recaudado - tresP) * 0.3), 2)))
-            c.drawString(380, y + 3.5, "$"+str(round(((recaudado - tresP) * 0.7), 2)))
+            c.drawString(305, y + 3.5, "$"+str(round(dataRem[0][6], 2)))
+            c.drawString(380, y + 3.5, "$"+str(round(dataRem[0][5], 2)))
         self.sess.close()
         ygridr.append(y)
         y -= 15
         c.drawString(25, y + 3.5, "TOTALES")
-        c.drawString(80, y + 3.5, "$"+str(round(total, 2)))
-        c.drawString(150, y + 3.5, "$"+str(round(adm, 2)))
+        c.drawString(90, y + 3.5, "$"+str(round(total, 2)))
+        c.drawString(160, y + 3.5, "$"+str(round(adm, 2)))
         c.drawString(225, y + 3.5, "$"+str(round(subtotal, 2)))
         c.drawString(310, y + 3.5, "$"+str(round(descuento, 2)))
         c.drawString(380, y + 3.5, "$"+str(round(apagar, 2)))
@@ -896,21 +898,21 @@ class Ui_MainWindow(QtWidgets.QWidget):
             try:
                 self.imprimeRemates()
                 self.imprimeCarrera()
+                self.idCarrera = None
+                self.nroCarrera = None
+                self.cantCaballos = None
+                self.idRemate = None
+                self.nroRemate = None
+                self.cajaCarga.close()
+                self.cajaCarga = None
+                self.strNames = ""
+                self.xy.setText("")
+                self.subtotales.setText("")
+                self.txtHistorial.setText("")
                 msg = QtWidgets.QMessageBox.question(self, "Crear o cerrar", "Desea crear una nueva carrera?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
                 if msg == QtWidgets.QMessageBox.Yes:
                     self.crear()
                 else:
-                    self.idCarrera = None
-                    self.nroCarrera = None
-                    self.cantCaballos = None
-                    self.idRemate = None
-                    self.nroRemate = None
-                    self.cajaCarga.close()
-                    self.cajaCarga = None
-                    self.strNames = ""
-                    self.xy.setText("")
-                    self.subtotales.setText("")
-                    self.txtHistorial.setText("")
                     self.dialogCarrera()
             except Exception as e:
                 if(e):
