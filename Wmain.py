@@ -837,9 +837,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         recaudado = 0
         total = 0
         adm = 0
+        sub = 0
         subtotal = 0
         descuento = 0
         apagar = 0
+        arendir = 0
         idrems = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
         c = canvas.Canvas("pdfs/carreras/rendimiento_carrera_"+str(self.nroCarrera)+".pdf")
         c.setFont("Courier-Bold", 10)
@@ -861,21 +863,30 @@ class Ui_MainWindow(QtWidgets.QWidget):
         for id in idrems:
             dataRem = self.sess.execute("SELECT * FROM remate WHERE id = :rem", {'rem':id[0]}).fetchall()
             recaudado = dataRem[0][4]
+            total += recaudado
             porc = dataRem[0][3]
             tresP = (recaudado * 0.03)
-            total += recaudado
             adm += tresP
             sub = recaudado - tresP
-            subtotal += recaudado - tresP
-            descuento += sub * porc
+            subtotal += sub
+            if(porc == 0.127):
+                desc = sub * 0.1
+                descuento += desc
+            if(porc == 0.224):
+                desc = sub * 0.2
+                descuento += desc
+            if(porc == 0.321):
+                desc = sub * 0.3
+                descuento += desc
             apagar += dataRem[0][5]
+            arendir += dataRem[0][6]
             ygridr.append(y)
             y -= 15
             c.drawString(25, y + 3.5, str(dataRem[0][2]))
             c.drawString(90, y + 3.5, "$"+str(dataRem[0][4]))
-            c.drawString(160, y + 3.5, "$"+str(round((recaudado * 0.03), 2)))
-            c.drawString(225, y + 3.5, "$"+str(round((recaudado - tresP), 2)))
-            c.drawString(305, y + 3.5, "$"+str(round((sub * porc), 2)))
+            c.drawString(160, y + 3.5, "$"+str(round(tresP, 2)))
+            c.drawString(225, y + 3.5, "$"+str(round(sub, 2)))
+            c.drawString(305, y + 3.5, "$"+str(round(desc, 2)))
             c.drawString(380, y + 3.5, "$"+str(round(dataRem[0][5], 2)))
         self.sess.close()
         ygridr.append(y)
@@ -890,7 +901,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         c.grid(xgridr, ygridr)
         y -= 20
         c.setFont("Courier-Bold", 12)
-        c.drawString(20, y, "TOTAL A RENDIR $"+str(round(total - apagar, 2)))
+        c.drawString(20, y, "TOTAL A RENDIR $"+str(round(arendir, 2)))
         c.save()
 
     def finCarrera(self):
