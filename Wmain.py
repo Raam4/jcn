@@ -729,6 +729,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
     
     def imprimeRemates(self):
         self.resetPdfVars()
+        mesa = self.sess.execute("SELECT mesa FROM reunion WHERE id = :reu", {'reu':self.idReunion}).scalar()
         idRems = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera}).fetchall()
         cantCabs = self.sess.execute("SELECT cantCaballos FROM carrera WHERE id = :car", {'car':self.idCarrera}).scalar()
         nombres = self.sess.execute("SELECT names FROM carrera WHERE id = :car", {'car':self.idCarrera}).fetchall()
@@ -772,7 +773,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 xtot = 310
             c.saveState()
             c.setFont("Courier-Bold", 10)
-            c.drawString(xtop, self.ydata, "Mesa de Remates N° 2")
+            c.drawString(xtop, self.ydata, "Mesa de Remates N° "+str(mesa))
             self.ydata -= 15
             c.drawString(xdata[0], self.ydata, "Carrera " + str(self.nroCarrera) + "  //")
             c.drawString(xdata[1], self.ydata, "Remate N°" + str(nroRem))
@@ -841,11 +842,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         apagar = 0
         arendir = 0
         idrems = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
+        mesa = self.sess.execute("SELECT mesa FROM reunion WHERE id = :reu", {'reu':self.idReunion}).scalar()
         c = canvas.Canvas("pdfs/carreras/rendimiento_carrera_"+str(self.nroCarrera)+".pdf")
         c.setFont("Courier-Bold", 10)
         y = 820
         c.drawString(20, y, "Carrera "+str(self.nroCarrera) + " //")
-        c.drawString(100, y, "Mesa de Remate N° 2")
+        c.drawString(100, y, "Mesa de Remate N° "+str(mesa))
         c.drawString(340, y, "Fecha: "+str(self.fec))
         y -= 20
         c.drawString(25, y, "N° Remate")
