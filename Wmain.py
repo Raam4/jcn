@@ -243,16 +243,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.creaB.clicked.connect(self.dlg.close)
         self.d1.setText("Seleccionar Carrera")
         self.d2.setText("Crear Carrera")
-        i = self.sess.execute("SELECT COUNT(*) FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).scalar() + 1
-        j = 1
+        idsCar = self.sess.execute("SELECT id FROM carrera WHERE idReunion = :val", {'val' : self.idReunion}).fetchall()
         self.combo = QtWidgets.QComboBox(self.dlg)
         self.combo.setGeometry(60, 50, 90, 23)
         self.combo.setPlaceholderText("None")
-        while(j<=i):
-            query = self.sess.execute("SELECT numero FROM carrera WHERE idReunion = :reu AND id = :val", {'reu': self.idReunion, 'val' : j}).scalar()
+        for id in idsCar:
+            query = self.sess.execute("SELECT numero FROM carrera WHERE idReunion = :reu AND id = :val", {'reu': self.idReunion, 'val' : id[0]}).scalar()
             if(query is not None):
                 self.combo.addItem(str(query))
-            j+=1
         self.sess.close()
         self.combo.activated[str].connect(self.seleccion)
         self.combo.activated.connect(self.dlg.close)
@@ -551,13 +549,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.txt += "<p style=\"font-size: 20px\">"
         self.txt += "<b>Remate "+str(self.nroRemate)+"</b> (Actualizado)<br>"
         if(self.diezP.isChecked()):
-            porc = 0.1
+            porc = 0.127
             self.txt += "Porcentaje 10%"
         if(self.veinteP.isChecked()):
-            porc = 0.2
+            porc = 0.224
             self.txt += "Porcentaje 20%"
         if(self.treintaP.isChecked()):
-            porc = 0.3
+            porc = 0.321
             self.txt += "Porcentaje 30%"
         i = 1
         for it in self.lines:
@@ -648,7 +646,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 ids = ids.fetchall()
                 for rem in ids:
                     tot = self.sess.execute("SELECT SUM(monto) FROM caballo WHERE idCarrera = :var AND idRemate = :rem", {'var' : self.idCarrera, 'rem':rem[0]}).scalar()
-                    porc = 0.3
+                    porc = 0.321
                     z = 1
                     c = 0
                     while(z<=qry):
@@ -657,9 +655,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
                             c+=1
                         z+=1
                     if(c==2):
-                        porc = 0.1
+                        porc = 0.127
                     if(c==3):
-                        porc = 0.2
+                        porc = 0.224
                     self.sess.execute("UPDATE remate SET porcentaje = :por, total = :tot WHERE id = :rem", {'por':porc, 'tot' : tot, 'rem' : rem[0]})
                     self.cuentasRemate(self.idCarrera, rem[0])
                     self.cuentasCarrera(self.idCarrera)
@@ -928,6 +926,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     self.dialogCarrera()
             except Exception as e:
                 if(e):
+                    print(e)
                     QtWidgets.QMessageBox.about(self, "Atención", "No hay ninguna carrera seleccionada.")
                 else:
                     QtWidgets.QMessageBox.about(self, "Atención", "Recuerde cerrar los pdf's abiertos.")
