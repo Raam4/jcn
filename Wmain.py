@@ -1006,3 +1006,4 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 printer.text_left('A PAGAR')
                 printer.text_right('$'+str(apagar))
                 self.lineBusca.clear()
+
