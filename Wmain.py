@@ -6,6 +6,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import utils
 import datetime
 from reportlab.pdfgen import canvas
+from escpos.conn import SerialConnection
+from escpos.impl.epson import GenericESCPOS
 
 class Ui_MainWindow(QtWidgets.QWidget):
     idCarrera = None
@@ -139,6 +141,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionImprimir_Carrera.setObjectName("actionImprimir_Carrera")
         self.actionImprimir_Carrera.triggered.connect(self.imprimeCarrera)
 
+        self.actionTicket = QtWidgets.QAction(MainWindow)
+        self.actionTicket.setObjectName("actionTicket")
+        self.actionTicket.triggered.connect(self.buscador)
+
         self.actionEliminar_Caballo = QtWidgets.QAction(MainWindow)
         self.actionEliminar_Caballo.setObjectName("actionEliminar_Caballo")
         self.actionEliminar_Caballo.triggered.connect(lambda: self.eliminador('cab'))
@@ -159,6 +165,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuMen.addAction(self.actionSalir)
         self.menuAcciones.addAction(self.actionImprimir_remates)
         self.menuAcciones.addAction(self.actionImprimir_Carrera)
+        self.menuAcciones.addAction(self.actionTicket)
         self.menuEdicion.addAction(self.actionEliminar_Caballo)
         self.menuEdicion.addAction(self.actionEliminar_Remate)
         self.menuEdicion.addAction(self.actionEliminar_Carrera)
@@ -188,6 +195,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionCaballos.setText(_translate("Remates JCN", "Caballos"))
         self.actionImprimir_remates.setText(_translate("Remates JCN", "Imprimir Remates"))
         self.actionImprimir_Carrera.setText(_translate("Remates JCN", "Imprimir Carrera"))
+        self.actionTicket.setText(_translate("Remates JCN", "Imprimir Ticket"))
         self.actionEliminar_Remate.setText(_translate("Remates JCN", "Eliminar Remate"))
         self.actionEliminar_Caballo.setText(_translate("Remates JCN", "Eliminar Caballo"))
         self.actionEliminar_Carrera.setText(_translate("Remates JCN", "Eliminar Carrera"))
@@ -637,7 +645,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         cab = int(self.lineElimina.text())
         qry = self.sess.execute("SELECT cantCaballos FROM carrera WHERE id = :car", {'car':self.idCarrera}).scalar()
         if(qry<cab):
-            QtWidgets.QMessageBox.about(self, "Remate", "El caballo no existe en esta carrera")
+            QtWidgets.QMessageBox.about(self, "Caballo", "El caballo no existe en esta carrera")
         else:
             self.sess.execute("UPDATE caballo SET monto = NULL WHERE idCarrera = :car AND numero = :cab", {'car':self.idCarrera, 'cab':cab})
             msg = QtWidgets.QMessageBox.question(self, "Eliminar", "El caballo se eliminará de todos los remates en esta carrera, proceder?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
@@ -671,7 +679,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         car = int(self.lineElimina.text())
         qry = self.sess.execute("SELECT id FROM carrera WHERE idReunion = :reu AND numero = :num",{'reu':self.idReunion, 'num':car}).scalar()
         if(qry is None):
-            QtWidgets.QMessageBox.about(self, "Remate", "La carrera no existe")
+            QtWidgets.QMessageBox.about(self, "Carrera", "La carrera no existe")
         else:
             self.sess.execute("DELETE FROM caballo WHERE idCarrera = :car", {'car':qry})
             self.sess.execute("DELETE FROM remate WHERE idCarrera = :car", {'car':qry})
@@ -935,3 +943,66 @@ class Ui_MainWindow(QtWidgets.QWidget):
         else:
             pass
 
+    def buscador(self):
+        self.busca = QtWidgets.QDialog()
+        self.busca.resize(270, 90)
+        self.busca.setMinimumSize(QtCore.QSize(270, 90))
+        self.busca.setMaximumSize(QtCore.QSize(270, 90))
+        self.labelBusca = QtWidgets.QLabel(self.busca)
+        self.labelBusca.setGeometry(QtCore.QRect(30, 10, 260, 30))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.labelBusca.setFont(font)
+        self.labelBusca.setObjectName("labelBus")
+        self.labelBusca.setText("Ingrese el numero de remate:")
+        self.lineBusca = QtWidgets.QLineEdit(self.busca)
+        self.lineBusca.setGeometry(QtCore.QRect(130, 40, 40, 20))
+        self.lineBusca.setObjectName("labelBus")
+        self.lineBusca.setValidator(QtGui.QIntValidator())
+        self.lineBusca.returnPressed.connect(self.buscaRemate)
+        self.busca.show()
+
+    def buscaRemate(self):
+        rem = int(self.lineBusca.text())
+        qry = self.sess.execute("SELECT * FROM remate WHERE idCarrera = :car AND numero = :rem", {'car':self.idCarrera, 'rem':rem}).fetchall()
+        try:
+            conn = SerialConnection.create('COM1:19200,8,1,N,RTSCTS')
+            printer = GenericESCPOS(conn)
+            printer.init()
+        except:
+            QtWidgets.QMessageBox.about(self, "Impresora", "La impresora está apagada o desconectada")
+            self.busca.close()
+        else:
+            if(qry is None):
+                QtWidgets.QMessageBox.about(self, "Remate", "El remate no existe")
+            else:
+                cabs = self.sess.execute("SELECT * FROM caballo WHERE idRemate = :rem", {'rem':qry[0][0]}).fetchall()
+                names = self.sess.execute("SELECT names FROM carrera WHERE id = :car", {'car':self.idCarrera}).fetchall()
+                nombres = names[0][0].split(sep='|')
+                printer.set_text_size(1, 1)
+                printer.set_emphasized(True)
+                printer.text_center(str(self.fec))
+                printer.text_left('Mesa de Remate N° 2')
+                printer.set_text_size(0, 0)
+                printer.set_emphasized(False)
+                for cab in cabs:
+                    numero = cab[3]
+                    monto = cab[4]
+                    nombre = nombres[numero - 1]
+                    printer.text_left(str(numero)+ " " + nombre)
+                    printer.text_right("$"+str(monto))
+                recaudado = qry[0][4]
+                desc = qry[0][6]
+                apagar = qry[0][5]
+                printer.text_left('Total')
+                printer.text_right('$'+str(recaudado))
+                printer.text_left('Descuentos')
+                printer.text_right('$'+str(desc))
+                printer.set_text_size(1, 1)
+                printer.set_emphasized(True)
+                printer.text_left('A PAGAR')
+                printer.text_right('$'+str(apagar))
+                self.lineBusca.clear()
