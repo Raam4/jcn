@@ -16,6 +16,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
     idRemate = None
     nroRemate = None
     cajaCarga = None
+    conn = None
     strNames = ""
     txt = ""
     sess = utils.bd()
@@ -968,25 +969,27 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def buscaRemate(self):
         rem = int(self.lineBusca.text())
         qry = self.sess.execute("SELECT * FROM remate WHERE idCarrera = :car AND numero = :rem", {'car':self.idCarrera, 'rem':rem}).fetchall()
-        try:
-            conn = SerialConnection.create('COM1:19200,8,1,N,RTSCTS')
-            printer = GenericESCPOS(conn)
-            printer.init()
-        except:
-            QtWidgets.QMessageBox.about(self, "Impresora", "La impresora está apagada o desconectada")
-            self.busca.close()
+        if(self.conn is None):
+            try:
+                self.conn = SerialConnection.create('COM1:19200,8,1,N,RTSCTS')
+            except:
+                self.conn = None
+                QtWidgets.QMessageBox.about(self, "Impresora", "La impresora está apagada o desconectada")
+                self.busca.close()
         else:
+            printer = GenericESCPOS(self.conn)
+            printer.init()
             if(qry is None):
                 QtWidgets.QMessageBox.about(self, "Remate", "El remate no existe")
             else:
                 cabs = self.sess.execute("SELECT * FROM caballo WHERE idRemate = :rem", {'rem':qry[0][0]}).fetchall()
                 names = self.sess.execute("SELECT names FROM carrera WHERE id = :car", {'car':self.idCarrera}).fetchall()
                 nombres = names[0][0].split(sep='|')
-                printer.set_text_size(1, 1)
                 printer.set_emphasized(True)
                 printer.text_center(str(self.fec))
-                printer.text_left('Mesa de Remate N° 2')
-                printer.set_text_size(0, 0)
+                printer.text_center('Mesa de Remate 2')
+                printer.text_center('Remate Nro '+str(qry[0][2]))
+                printer.lf()
                 printer.set_emphasized(False)
                 for cab in cabs:
                     numero = cab[3]
@@ -994,16 +997,28 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     nombre = nombres[numero - 1]
                     printer.text_left(str(numero)+ " " + nombre)
                     printer.text_right("$"+str(monto))
+                    printer.lf()
                 recaudado = qry[0][4]
                 desc = qry[0][6]
                 apagar = qry[0][5]
+                printer.lf()
                 printer.text_left('Total')
                 printer.text_right('$'+str(recaudado))
+                printer.lf()
                 printer.text_left('Descuentos')
                 printer.text_right('$'+str(desc))
+                printer.lf()
                 printer.set_text_size(1, 1)
                 printer.set_emphasized(True)
-                printer.text_left('A PAGAR')
-                printer.text_right('$'+str(apagar))
+                printer.text_center('A Pagar')
+                printer.text_center('$'+str(apagar))
+                printer.lf()
+                printer.lf()
+                printer.lf()
+                printer.lf()
+                printer.lf()
+                printer.lf()
+                printer.cutter()
+                self.sess.execute("UPDATE remate SET pagado = True WHERE id=:rem",{'rem':qry[0][0]})
                 self.lineBusca.clear()
 
