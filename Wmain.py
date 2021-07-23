@@ -25,10 +25,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
         idReunion = sess.execute("SELECT COUNT(*) FROM reunion").scalar() + 1
         sess.execute("INSERT INTO reunion(id, fecha) VALUES (:val, :par)", {'val' : idReunion, 'par' : fec})
         sess.commit()
-        sess.close()
     except:
         idReunion = sess.execute("SELECT id FROM reunion WHERE fecha = :var", {'var' : fec}).scalar()
-        sess.close()
+    mesa = sess.execute("SELECT mesa FROM reunion WHERE id = :reu", {'reu': idReunion}).scalar()
     
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("Remates JCN")
@@ -738,7 +737,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
     
     def imprimeRemates(self):
         self.resetPdfVars()
-        mesa = self.sess.execute("SELECT mesa FROM reunion WHERE id = :reu", {'reu':self.idReunion}).scalar()
         idRems = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera}).fetchall()
         cantCabs = self.sess.execute("SELECT cantCaballos FROM carrera WHERE id = :car", {'car':self.idCarrera}).scalar()
         nombres = self.sess.execute("SELECT names FROM carrera WHERE id = :car", {'car':self.idCarrera}).fetchall()
@@ -782,7 +780,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 xtot = 310
             c.saveState()
             c.setFont("Courier-Bold", 10)
-            c.drawString(xtop, self.ydata, "Mesa de Remates N° "+str(mesa))
+            c.drawString(xtop, self.ydata, "Mesa de Remates N° "+str(self.mesa))
             self.ydata -= 15
             c.drawString(xdata[0], self.ydata, "Carrera " + str(self.nroCarrera) + "  //")
             c.drawString(xdata[1], self.ydata, "Remate N°" + str(nroRem))
@@ -851,12 +849,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         apagar = 0
         arendir = 0
         idrems = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
-        mesa = self.sess.execute("SELECT mesa FROM reunion WHERE id = :reu", {'reu':self.idReunion}).scalar()
         c = canvas.Canvas("pdfs/carreras/rendimiento_carrera_"+str(self.nroCarrera)+".pdf")
         c.setFont("Courier-Bold", 10)
         y = 820
         c.drawString(20, y, "Carrera "+str(self.nroCarrera) + " //")
-        c.drawString(100, y, "Mesa de Remate N° "+str(mesa))
+        c.drawString(100, y, "Mesa de Remate N° "+str(self.mesa))
         c.drawString(340, y, "Fecha: "+str(self.fec))
         y -= 20
         c.drawString(25, y, "N° Remate")
@@ -993,7 +990,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     nombres = names[0][0].split(sep='|')
                     printer.set_emphasized(True)
                     printer.text_center(str(self.fec))
-                    printer.text_center('Mesa de Remate 2')
+                    printer.text_center('Mesa de Remate '+str(self.mesa))
                     printer.text_center('Remate Nro '+str(qry[0][2]))
                     printer.lf()
                     printer.set_emphasized(False)
