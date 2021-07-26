@@ -276,6 +276,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.sess.execute("INSERT INTO carrera(id, idReunion, numero) VALUES (:val, :par, :var)", {'val' : self.idCarrera, 'par' : self.idReunion, 'var' : self.nroCarrera})
         self.sess.commit()
         self.sess.close()
+        if(self.cajaCarga is not None):
+            self.cajaCarga.close()
         self.horses()
         self.xy.setText(str(self.nroCarrera))
 
@@ -326,10 +328,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     def setCabs(self):
         self.cantCaballos = int(self.lineCab.text())
-        sess = utils.bd()
-        sess.execute("UPDATE carrera SET cantCaballos = :cab WHERE id = :reu", {'cab' : self.cantCaballos, 'reu' : self.idCarrera})
-        sess.commit()
-        sess.close()
+        self.sess.execute("UPDATE carrera SET cantCaballos = :cab WHERE id = :car", {'cab' : self.cantCaballos, 'car' : self.idCarrera})
+        self.sess.commit()
+        self.sess.close()
         self.setPorcentaje()
         self.cabsNameW()
 
@@ -404,6 +405,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.lines = []
         i = 0
         h = 40
+        while(self.cantCaballos is None):
+            self.horses()
         while(i<int(self.cantCaballos)):
             self.lines.append(QtWidgets.QLineEdit(self.caja))
             self.lines[i].setGeometry(QtCore.QRect(110, h, 101, 20))
