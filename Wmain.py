@@ -165,7 +165,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuMen.addAction(self.actionSalir)
         self.menuAcciones.addAction(self.actionImprimir_remates)
         self.menuAcciones.addAction(self.actionImprimir_Carrera)
-        self.menuAcciones.addAction(self.actionTicket)
+        #self.menuAcciones.addAction(self.actionTicket)
         self.menuEdicion.addAction(self.actionEliminar_Caballo)
         self.menuEdicion.addAction(self.actionEliminar_Remate)
         self.menuEdicion.addAction(self.actionEliminar_Carrera)
