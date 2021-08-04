@@ -5,6 +5,7 @@ sys.path.append("./")
 from PyQt5 import QtCore, QtGui, QtWidgets
 import utils
 import datetime
+import math
 from reportlab.pdfgen import canvas
 from escpos.conn import SerialConnection
 from escpos.impl.epson import GenericESCPOS
@@ -17,6 +18,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
     nroRemate = None
     cajaCarga = None
     conn = None
+    porcentaje = None
     strNames = ""
     txt = ""
     sess = utils.bd()
@@ -74,17 +76,26 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.diezP.setAutoRepeat(False)
         self.diezP.setObjectName("diezP")
         self.veinteP = QtWidgets.QRadioButton(self.porcentajes)
-        self.veinteP.setGeometry(QtCore.QRect(20, 50, 65, 20))
+        self.veinteP.setGeometry(QtCore.QRect(20, 40, 65, 20))
         self.veinteP.setFont(fontp)
         self.veinteP.setChecked(False)
         self.veinteP.setAutoRepeat(False)
         self.veinteP.setObjectName("veinteP")
         self.treintaP = QtWidgets.QRadioButton(self.porcentajes)
-        self.treintaP.setGeometry(QtCore.QRect(20, 80, 65, 20))
+        self.treintaP.setGeometry(QtCore.QRect(20, 60, 65, 20))
         self.treintaP.setFont(fontp)
         self.treintaP.setChecked(False)
         self.treintaP.setAutoRepeat(False)
         self.treintaP.setObjectName("treintaP")
+
+        self.otroP = QtWidgets.QRadioButton(self.porcentajes)
+        self.otroP.setGeometry(QtCore.QRect(20, 80, 65, 20))
+        self.otroP.setFont(fontp)
+        self.otroP.setChecked(False)
+        self.otroP.setAutoRepeat(False)
+        self.otroP.setObjectName("treintaP")
+        self.otroP.toggled.connect(self.onClicked)
+
         #Box Subtotales
         self.bsubtotales = QtWidgets.QGroupBox(self.centralwidget)
         self.bsubtotales.setGeometry(QtCore.QRect(340, 50, 251, 111))
@@ -185,6 +196,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.diezP.setText(_translate("Remates JCN", "10%"))
         self.veinteP.setText(_translate("Remates JCN", "20%"))
         self.treintaP.setText(_translate("Remates JCN", "30%"))
+        self.otroP.setText(_translate("Remates JCN", "Otro"))
         self.bsubtotales.setTitle(_translate("Remates JCN", "Subtotales"))
         self.bhistorial.setTitle(_translate("Remates JCN", "Historial de Carga"))
         self.finCarreraBtn.setText(_translate("Remates JCN", "Finalizar Carrera"))
@@ -519,15 +531,18 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.txt += "<p style=\"font-size: 20px\">"
         self.txt += "<b>Remate "+str(self.nroRemate)+"</b><br>"
         if(self.diezP.isChecked()):
-            porc = 0.127
+            self.porcentaje = 0.127
             self.txt += "Porcentaje 10%"
         if(self.veinteP.isChecked()):
-            porc = 0.224
+            self.porcentaje = 0.224
             self.txt += "Porcentaje 20%"
         if(self.treintaP.isChecked()):
-            porc = 0.321
+            self.porcentaje = 0.321
             self.txt += "Porcentaje 30%"
-        self.sess.execute("INSERT INTO remate(id, idCarrera, numero, porcentaje) VALUES (:val, :par, :var, :car)", {'val' : self.idRemate, 'par' : self.idCarrera, 'var' : self.nroRemate, 'car' : porc})
+        if(self.otroP.isChecked()):
+            self.txt += "Porcentaje "+str(math.floor(self.porcentaje * 100) - 2)+"%"
+
+        self.sess.execute("INSERT INTO remate(id, idCarrera, numero, porcentaje) VALUES (:val, :par, :var, :car)", {'val' : self.idRemate, 'par' : self.idCarrera, 'var' : self.nroRemate, 'car' : self.porcentaje})
         for it in self.lines:
             self.rmt = it.text()
             if(self.rmt == ""):
@@ -553,6 +568,38 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.txt = ""
         self.lremate.setText(str(self.nroRemate + 1))
 
+    def onClicked(self):
+        self.otroP = self.sender()
+        if self.otroP.isChecked():
+            self.otroPorc()
+
+    def otroPorc(self):
+        self.specialP = QtWidgets.QDialog()
+        self.specialP.resize(270, 90)
+        self.specialP.setMinimumSize(QtCore.QSize(270, 100))
+        self.specialP.setMaximumSize(QtCore.QSize(270, 100))
+        self.labelSpecialP = QtWidgets.QLabel(self.specialP)
+        self.labelSpecialP.setGeometry(QtCore.QRect(30, 10, 260, 30))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.labelSpecialP.setFont(font)
+        self.labelSpecialP.setObjectName("labelSpecialP")
+        self.labelSpecialP.setText("Ingrese el valor del porcentaje:")
+        self.lineSpecialP = QtWidgets.QLineEdit(self.specialP)
+        self.lineSpecialP.setGeometry(QtCore.QRect(130, 40, 40, 20))
+        self.lineSpecialP.setObjectName("labelBus")
+        self.lineSpecialP.setValidator(QtGui.QIntValidator())
+        self.lineSpecialP.returnPressed.connect(self.setPorcSpecial)
+        self.lineSpecialP.returnPressed.connect(self.specialP.close)
+        self.specialP.show()
+
+    def setPorcSpecial(self):
+        porc = int(self.lineSpecialP.text())
+        self.porcentaje = ((3 - porc * 0.03) + porc) / 100
+
     def updRemate(self):
         noms = self.sess.execute("SELECT names FROM carrera WHERE id = :car", {'car':self.idCarrera}).fetchall()
         noms = noms[0][0].split(sep='|')
@@ -560,13 +607,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.txt += "<p style=\"font-size: 20px\">"
         self.txt += "<b>Remate "+str(self.nroRemate)+"</b> (Actualizado)<br>"
         if(self.diezP.isChecked()):
-            porc = 0.127
+            self.porcentaje = 0.127
             self.txt += "Porcentaje 10%"
         if(self.veinteP.isChecked()):
-            porc = 0.224
+            self.porcentaje = 0.224
             self.txt += "Porcentaje 20%"
         if(self.treintaP.isChecked()):
-            porc = 0.321
+            self.porcentaje = 0.321
             self.txt += "Porcentaje 30%"
         i = 1
         for it in self.lines:
@@ -581,7 +628,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.sess.execute("UPDATE caballo SET monto = :mon WHERE id = :cab", {'mon' : self.rmt, 'cab' : self.idCaballo})
             i+=1
         total = self.sess.execute("SELECT SUM(monto) FROM caballo WHERE idRemate = :var", {'var' : self.idRemate}).scalar()
-        self.sess.execute("UPDATE remate SET porcentaje = :por, total = :tot WHERE id = :rem", {'por' : porc, 'tot' : total, 'rem' : self.idRemate})
+        self.sess.execute("UPDATE remate SET porcentaje = :por, total = :tot WHERE id = :rem", {'por' : self.porcentaje, 'tot' : total, 'rem' : self.idRemate})
         msg = QtWidgets.QMessageBox.question(self, "Actualizar", "El remate ya se encuentra cargado, actualizar?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
         if msg == QtWidgets.QMessageBox.Yes:
             self.cuentasRemate(self.idCarrera, self.idRemate)
@@ -881,11 +928,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
             if(porc == 0.127):
                 desc = sub * 0.1
                 descuento += desc
-            if(porc == 0.224):
+            elif(porc == 0.224):
                 desc = sub * 0.2
                 descuento += desc
-            if(porc == 0.321):
+            elif(porc == 0.321):
                 desc = sub * 0.3
+                descuento += desc
+            else:
+                desc = sub * (math.floor(porc * 100 - 2) / 100)
                 descuento += desc
             apagar += dataRem[0][5]
             arendir += dataRem[0][6]
@@ -926,6 +976,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.nroRemate = None
                 self.cajaCarga.close()
                 self.cajaCarga = None
+                self.porcentaje = None
                 self.strNames = ""
                 self.xy.setText("")
                 self.subtotales.setText("")
