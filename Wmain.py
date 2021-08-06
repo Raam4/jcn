@@ -298,7 +298,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.idCarrera = qry[0][0]
         rems = self.sess.execute("SELECT COUNT(*) FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
         self.nroCarrera = int(text)
-        totalCarrera = qry[0][4]
+        totalCarrera = qry[0][4] + qry[0][8]
         if(totalCarrera is not None):
             totalARendir = qry[0][6]
             totalAPagar = qry[0][5]
@@ -531,16 +531,16 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.txt += "<p style=\"font-size: 20px\">"
         self.txt += "<b>Remate "+str(self.nroRemate)+"</b><br>"
         if(self.diezP.isChecked()):
-            self.porcentaje = 0.127
+            self.porcentaje = 0.1
             self.txt += "Porcentaje 10%"
         if(self.veinteP.isChecked()):
-            self.porcentaje = 0.224
+            self.porcentaje = 0.2
             self.txt += "Porcentaje 20%"
         if(self.treintaP.isChecked()):
-            self.porcentaje = 0.321
+            self.porcentaje = 0.3
             self.txt += "Porcentaje 30%"
         if(self.otroP.isChecked()):
-            self.txt += "Porcentaje "+str(math.floor(self.porcentaje * 100) - 2)+"%"
+            self.txt += "Porcentaje "+str(round(self.porcentaje * 100))+"%"
 
         self.sess.execute("INSERT INTO remate(id, idCarrera, numero, porcentaje) VALUES (:val, :par, :var, :car)", {'val' : self.idRemate, 'par' : self.idCarrera, 'var' : self.nroRemate, 'car' : self.porcentaje})
         for it in self.lines:
@@ -558,7 +558,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.sess.execute("INSERT INTO caballo(id, idCarrera, idRemate, numero, monto) VALUES (:val, :par, :rem, :var, :car)", {'val' : self.idCaballo, 'par' : self.idCarrera, 'rem' : self.idRemate, 'var' : i, 'car' : self.rmt})
             i+=1
         total = self.sess.execute("SELECT SUM(monto) FROM caballo WHERE idRemate = :var", {'var' : self.idRemate}).scalar()
-        self.sess.execute("UPDATE remate SET total = :tot WHERE id = :rem", {'tot' : total, 'rem' : self.idRemate})
+        adm = total * 0.03
+        total = total * 0.97
+        self.sess.execute("UPDATE remate SET total = :tot, adm = :adm WHERE id = :rem", {'tot' : total, 'adm' : adm , 'rem' : self.idRemate})
         self.cuentasRemate(self.idCarrera, self.idRemate)
         self.cuentasCarrera(self.idCarrera)
         self.sess.commit()
@@ -598,7 +600,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     def setPorcSpecial(self):
         porc = int(self.lineSpecialP.text())
-        self.porcentaje = ((3 - porc * 0.03) + porc) / 100
+        self.porcentaje = porc / 100
 
     def updRemate(self):
         noms = self.sess.execute("SELECT names FROM carrera WHERE id = :car", {'car':self.idCarrera}).fetchall()
@@ -607,14 +609,16 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.txt += "<p style=\"font-size: 20px\">"
         self.txt += "<b>Remate "+str(self.nroRemate)+"</b> (Actualizado)<br>"
         if(self.diezP.isChecked()):
-            self.porcentaje = 0.127
+            self.porcentaje = 0.1
             self.txt += "Porcentaje 10%"
         if(self.veinteP.isChecked()):
-            self.porcentaje = 0.224
+            self.porcentaje = 0.2
             self.txt += "Porcentaje 20%"
         if(self.treintaP.isChecked()):
-            self.porcentaje = 0.321
+            self.porcentaje = 0.3
             self.txt += "Porcentaje 30%"
+        if(self.otroP.isChecked()):
+            self.txt += "Porcentaje "+str(round(self.porcentaje * 100))+"%"
         i = 1
         for it in self.lines:
             self.rmt = it.text()
@@ -628,7 +632,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.sess.execute("UPDATE caballo SET monto = :mon WHERE id = :cab", {'mon' : self.rmt, 'cab' : self.idCaballo})
             i+=1
         total = self.sess.execute("SELECT SUM(monto) FROM caballo WHERE idRemate = :var", {'var' : self.idRemate}).scalar()
-        self.sess.execute("UPDATE remate SET porcentaje = :por, total = :tot WHERE id = :rem", {'por' : self.porcentaje, 'tot' : total, 'rem' : self.idRemate})
+        adm = total * 0.03
+        total = total * 0.97
+        self.sess.execute("UPDATE remate SET porcentaje = :por, total = :tot, adm = :adm WHERE id = :rem", {'por' : self.porcentaje, 'tot' : total, 'adm' : adm, 'rem' : self.idRemate})
         msg = QtWidgets.QMessageBox.question(self, "Actualizar", "El remate ya se encuentra cargado, actualizar?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
         if msg == QtWidgets.QMessageBox.Yes:
             self.cuentasRemate(self.idCarrera, self.idRemate)
@@ -703,8 +709,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 ids = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
                 ids = ids.fetchall()
                 for rem in ids:
-                    tot = self.sess.execute("SELECT SUM(monto) FROM caballo WHERE idCarrera = :var AND idRemate = :rem", {'var' : self.idCarrera, 'rem':rem[0]}).scalar()
-                    porc = 0.321
+                    total = self.sess.execute("SELECT SUM(monto) FROM caballo WHERE idCarrera = :var AND idRemate = :rem", {'var' : self.idCarrera, 'rem':rem[0]}).scalar()
+                    adm = total * 0.03
+                    total = total * 0.97
+                    porc = 0.3
                     z = 1
                     c = 0
                     while(z<=qry):
@@ -713,10 +721,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
                             c+=1
                         z+=1
                     if(c==2):
-                        porc = 0.127
+                        porc = 0.1
                     if(c==3):
-                        porc = 0.224
-                    self.sess.execute("UPDATE remate SET porcentaje = :por, total = :tot WHERE id = :rem", {'por':porc, 'tot' : tot, 'rem' : rem[0]})
+                        porc = 0.2
+                    self.sess.execute("UPDATE remate SET porcentaje = :por, total = :tot, adm = :adm WHERE id = :rem", {'por':porc, 'tot' : total, 'adm' : adm, 'rem' : rem[0]})
                     self.cuentasRemate(self.idCarrera, rem[0])
                     self.cuentasCarrera(self.idCarrera)
                 self.sess.commit()
@@ -760,8 +768,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def cuentasRemate(self, idCar, idRem):
         totalRemate = self.sess.execute("SELECT total FROM remate WHERE idCarrera = :car AND id = :rem", {'car':idCar, 'rem':idRem}).scalar()
         porc = self.sess.execute("SELECT porcentaje FROM remate WHERE idCarrera = :car AND id = :rem", {'car':idCar, 'rem':idRem}).scalar()
-        aRendir = totalRemate * porc
-        aPagar = totalRemate - aRendir
+        adm = self.sess.execute("SELECT adm FROM remate WHERE idCarrera = :car AND id = :rem", {'car':idCar, 'rem':idRem}).scalar()
+        aRendir = totalRemate * porc + adm
+        aPagar = totalRemate * (1-porc)
         self.sess.execute("UPDATE remate SET aPagar = :apa, aRendir = :are WHERE idCarrera = :car AND id = :rem", {'apa':aPagar, 'are':aRendir, 'car':idCar, 'rem':idRem})
        
     def cuentasCarrera(self, idCar):
@@ -770,9 +779,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.sess.execute("UPDATE carrera SET total = :tot WHERE id = :car", {'tot':totalCarrera, 'car':idCar})
         totalAPagar = self.sess.execute("SELECT SUM(aPagar) FROM remate WHERE idCarrera = :car", {'car':idCar}).scalar()
         totalARendir = self.sess.execute("SELECT SUM(aRendir) FROM remate WHERE idCarrera = :car", {'car':idCar}).scalar()
-        self.sess.execute("UPDATE carrera SET aRendir = :are, aPagar = :apa WHERE id = :car AND idReunion = :reu", {'are':totalARendir, 'apa':totalAPagar, 'car':idCar, 'reu':self.idReunion})
-        self.subtotales.setText("<b>"+str(rems)+" Remates - Total $"+str(totalCarrera)+"</b><br><br><b>A Rendir</b> $"+str(round(totalARendir, 2))+"<br><br><b>A Pagar</b> $"+str(round(totalAPagar, 2)))
-        
+        totalAdm = self.sess.execute("SELECT SUM(adm) FROM remate WHERE idCarrera = :car", {'car':idCar}).scalar()
+        self.sess.execute("UPDATE carrera SET aRendir = :are, aPagar = :apa, adm = :adm WHERE id = :car AND idReunion = :reu", {'are':totalARendir, 'apa':totalAPagar, 'adm' : totalAdm, 'car':idCar, 'reu':self.idReunion})
+        try:
+            self.subtotales.setText("<b>"+str(rems)+" Remates - Total $"+str(totalCarrera)+"</b><br><br><b>A Rendir</b> $"+str(round(totalARendir, 2))+"<br><br><b>A Pagar</b> $"+str(round(totalAPagar, 2)))
+        except:
+            self.subtotales.setText("<b>0 Remates - Total $0</b><br><br><b>A Rendir</b> $0<br><br><b>A Pagar</b> $0")
+
     def resetPdfVars(self):
         self.fontPdf = "Courier"
         self.sizePdf = 10
@@ -856,8 +869,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     c.drawString(xcab[2] - 5, self.ydata + 3, "$0")
                 else:
                     c.drawString(xcab[2] - 5, self.ydata + 3, "$" + str(monto))
-            montos = self.sess.execute("SELECT total, aPagar, aRendir FROM remate WHERE id = :rem", {'rem':id[0]}).fetchall()
-            total = montos[0][0]
+            montos = self.sess.execute("SELECT total, aPagar, aRendir, adm FROM remate WHERE id = :rem", {'rem':id[0]}).fetchall()
+            total = montos[0][0] + montos[0][3]
             apagar = montos[0][1]
             arendir = montos[0][2]
             self.ygrid.append(self.ydata)
@@ -893,6 +906,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         recaudado = 0
         total = 0
         adm = 0
+        totAdm = 0
         sub = 0
         subtotal = 0
         descuento = 0
@@ -918,32 +932,22 @@ class Ui_MainWindow(QtWidgets.QWidget):
         ygridr.append(y + 25)
         for id in idrems:
             dataRem = self.sess.execute("SELECT * FROM remate WHERE id = :rem", {'rem':id[0]}).fetchall()
-            recaudado = dataRem[0][4]
+            recaudado = dataRem[0][4] + dataRem[0][7]
             total += recaudado
             porc = dataRem[0][3]
-            tresP = (recaudado * 0.03)
-            adm += tresP
-            sub = recaudado - tresP
+            adm = dataRem[0][7]
+            totAdm += adm
+            sub = dataRem[0][4]
             subtotal += sub
-            if(porc == 0.127):
-                desc = sub * 0.1
-                descuento += desc
-            elif(porc == 0.224):
-                desc = sub * 0.2
-                descuento += desc
-            elif(porc == 0.321):
-                desc = sub * 0.3
-                descuento += desc
-            else:
-                desc = sub * (math.floor(porc * 100 - 2) / 100)
-                descuento += desc
+            desc = sub * porc
+            descuento += desc
             apagar += dataRem[0][5]
             arendir += dataRem[0][6]
             ygridr.append(y)
             y -= 15
             c.drawString(25, y + 3.5, str(dataRem[0][2]))
-            c.drawString(90, y + 3.5, "$"+str(dataRem[0][4]))
-            c.drawString(160, y + 3.5, "$"+str(round(tresP, 2)))
+            c.drawString(90, y + 3.5, "$"+str(round(recaudado, 2)))
+            c.drawString(160, y + 3.5, "$"+str(round(adm, 2)))
             c.drawString(225, y + 3.5, "$"+str(round(sub, 2)))
             c.drawString(305, y + 3.5, "$"+str(round(desc, 2)))
             c.drawString(380, y + 3.5, "$"+str(round(dataRem[0][5], 2)))
@@ -952,7 +956,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         y -= 15
         c.drawString(25, y + 3.5, "TOTALES")
         c.drawString(90, y + 3.5, "$"+str(round(total, 2)))
-        c.drawString(160, y + 3.5, "$"+str(round(adm, 2)))
+        c.drawString(160, y + 3.5, "$"+str(round(totAdm, 2)))
         c.drawString(225, y + 3.5, "$"+str(round(subtotal, 2)))
         c.drawString(305, y + 3.5, "$"+str(round(descuento, 2)))
         c.drawString(380, y + 3.5, "$"+str(round(apagar, 2)))
