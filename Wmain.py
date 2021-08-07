@@ -5,7 +5,6 @@ sys.path.append("./")
 from PyQt5 import QtCore, QtGui, QtWidgets
 import utils
 import datetime
-import math
 from reportlab.pdfgen import canvas
 from escpos.conn import SerialConnection
 from escpos.impl.epson import GenericESCPOS
@@ -298,11 +297,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.idCarrera = qry[0][0]
         rems = self.sess.execute("SELECT COUNT(*) FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
         self.nroCarrera = int(text)
-        totalCarrera = qry[0][4] + qry[0][8]
+        totalCarrera = qry[0][4]
+        adm = qry[0][8]
         if(totalCarrera is not None):
             totalARendir = qry[0][6]
             totalAPagar = qry[0][5]
-            self.subtotales.setText("<b>"+str(rems)+" Remates - Total $"+str(totalCarrera)+"</b><br><br><b>A Rendir</b> $"+str(round(totalARendir, 2))+"<br><br><b>A Pagar</b> $"+str(round(totalAPagar, 2)))
+            self.subtotales.setText("<b>"+str(rems)+" Remates - Total $"+str(totalCarrera+adm)+"</b><br><br><b>A Rendir</b> $"+str(round(totalARendir, 2))+"<br><br><b>A Pagar</b> $"+str(round(totalAPagar, 2)))
         else:
             self.subtotales.setText("<b>Aún no se cargaron remates</b>")
         try:
