@@ -5,7 +5,6 @@ sys.path.append("./")
 from PyQt5 import QtCore, QtGui, QtWidgets
 import utils
 import datetime
-import math
 from reportlab.pdfgen import canvas
 from escpos.conn import SerialConnection
 from escpos.impl.epson import GenericESCPOS
@@ -922,13 +921,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
         c.drawString(340, y, "Fecha: "+str(self.fec))
         y -= 20
         c.drawString(25, y, "N° Remate")
-        c.drawString(85, y, "Recaudado")
-        c.drawString(165, y, "Adm")
-        c.drawString(225, y, "Subtotal")
-        c.drawString(300, y, "Descuentos")
-        c.drawString(380, y, "A Pagar")
+        c.drawString(90, y, "%")
+        c.drawString(115, y, "Recaudado")
+        c.drawString(195, y, "Adm")
+        c.drawString(255, y, "Subtotal")
+        c.drawString(330, y, "Descuentos")
+        c.drawString(410, y, "A Pagar")
         y -= 10
-        xgridr = [20, 80, 145, 210, 290, 365, 440]
+        xgridr = [20, 80, 110, 175, 240, 320, 395, 470]
         ygridr = []
         ygridr.append(y + 25)
         for id in idrems:
@@ -947,20 +947,22 @@ class Ui_MainWindow(QtWidgets.QWidget):
             ygridr.append(y)
             y -= 15
             c.drawString(25, y + 3.5, str(dataRem[0][2]))
-            c.drawString(90, y + 3.5, "$"+str(round(recaudado, 2)))
-            c.drawString(160, y + 3.5, "$"+str(round(adm, 2)))
-            c.drawString(225, y + 3.5, "$"+str(round(sub, 2)))
-            c.drawString(305, y + 3.5, "$"+str(round(desc, 2)))
-            c.drawString(380, y + 3.5, "$"+str(round(dataRem[0][5], 2)))
+            c.drawString(90, y + 3.5, str(int(dataRem[0][3]*100)))
+            c.drawString(115, y + 3.5, "$"+str(round(recaudado, 2)))
+            c.drawString(185, y + 3.5, "$"+str(round(adm, 2)))
+            c.drawString(250, y + 3.5, "$"+str(round(sub, 2)))
+            c.drawString(335, y + 3.5, "$"+str(round(desc, 2)))
+            c.drawString(405, y + 3.5, "$"+str(round(dataRem[0][5], 2)))
         self.sess.close()
         ygridr.append(y)
         y -= 15
         c.drawString(25, y + 3.5, "TOTALES")
-        c.drawString(90, y + 3.5, "$"+str(round(total, 2)))
-        c.drawString(160, y + 3.5, "$"+str(round(totAdm, 2)))
-        c.drawString(225, y + 3.5, "$"+str(round(subtotal, 2)))
-        c.drawString(305, y + 3.5, "$"+str(round(descuento, 2)))
-        c.drawString(380, y + 3.5, "$"+str(round(apagar, 2)))
+        c.drawString(90, y + 3.5, "--")
+        c.drawString(115, y + 3.5, "$"+str(round(total, 2)))
+        c.drawString(185, y + 3.5, "$"+str(round(totAdm, 2)))
+        c.drawString(250, y + 3.5, "$"+str(round(subtotal, 2)))
+        c.drawString(335, y + 3.5, "$"+str(round(descuento, 2)))
+        c.drawString(405, y + 3.5, "$"+str(round(apagar, 2)))
         ygridr.append(y)
         c.grid(xgridr, ygridr)
         y -= 20
