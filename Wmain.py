@@ -788,7 +788,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         totalAdm = self.sess.execute("SELECT SUM(adm) FROM remate WHERE idCarrera = :car", {'car':idCar}).scalar()
         self.sess.execute("UPDATE carrera SET aRendir = :are, aPagar = :apa, adm = :adm WHERE id = :car AND idReunion = :reu", {'are':totalARendir, 'apa':totalAPagar, 'adm' : totalAdm, 'car':idCar, 'reu':self.idReunion})
         try:
-            self.subtotales.setText("<b>"+str(rems)+" Remates - Total $"+str(totalCarrera)+"</b><br><br><b>A Rendir</b> $"+str(round(totalARendir, 2))+"<br><br><b>A Pagar</b> $"+str(round(totalAPagar, 2)))
+            self.subtotales.setText("<b>"+str(rems)+" Remates - Total $"+str(totalCarrera+totalAdm)+"</b><br><br><b>A Rendir</b> $"+str(round(totalARendir, 2))+"<br><br><b>A Pagar</b> $"+str(round(totalAPagar, 2)))
         except:
             self.subtotales.setText("<b>0 Remates - Total $0</b><br><br><b>A Rendir</b> $0<br><br><b>A Pagar</b> $0")
 
