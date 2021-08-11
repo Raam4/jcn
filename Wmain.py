@@ -1125,12 +1125,20 @@ class Ui_MainWindow(QtWidgets.QWidget):
         for id in idCars:
             dataCars = self.sess.execute("SELECT * FROM carrera WHERE id = :car", {'car':id[0]}).fetchall()
             car10 = self.sess.execute("SELECT SUM(remate.total)+SUM(remate.adm) FROM remate INNER JOIN carrera ON carrera.id = remate.idCarrera WHERE carrera.id = :car AND remate.porcentaje = 0.1", {'car':id[0]}).scalar()
+            if(car10 is None):
+                car10 = 0
             tot10 += car10
             car20 = self.sess.execute("SELECT SUM(remate.total)+SUM(remate.adm) FROM remate INNER JOIN carrera ON carrera.id = remate.idCarrera WHERE carrera.id = :car AND remate.porcentaje = 0.2", {'car':id[0]}).scalar()
+            if(car20 is None):
+                car20 = 0
             tot20 += car20
             car30 = self.sess.execute("SELECT SUM(remate.total)+SUM(remate.adm) FROM remate INNER JOIN carrera ON carrera.id = remate.idCarrera WHERE carrera.id = :car AND remate.porcentaje = 0.3", {'car':id[0]}).scalar()
+            if(car30 is None):
+                car30 = 0
             tot30 += car30
             carN = self.sess.execute("SELECT SUM(remate.total)+SUM(remate.adm) FROM remate INNER JOIN carrera ON carrera.id = remate.idCarrera WHERE carrera.id = :car AND NOT remate.porcentaje = 0.1 AND NOT remate.porcentaje = 0.2 AND NOT remate.porcentaje = 0.3", {'car':id[0]}).scalar()
+            if(carN is None):
+                carN = 0
             totN += carN
             carTot = car10 + car20 + car30 + carN
             totAll += carTot
