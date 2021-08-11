@@ -151,6 +151,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionImprimir_Carrera.setObjectName("actionImprimir_Carrera")
         self.actionImprimir_Carrera.triggered.connect(self.imprimeCarrera)
 
+        self.actionImprimir_Reunion = QtWidgets.QAction(MainWindow)
+        self.actionImprimir_Reunion.setObjectName("actionImprimir_Reunion")
+        self.actionImprimir_Reunion.triggered.connect(self.imprimeReunion)
+
         self.actionTicket = QtWidgets.QAction(MainWindow)
         self.actionTicket.setObjectName("actionTicket")
         self.actionTicket.triggered.connect(self.buscador)
@@ -175,6 +179,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.menuMen.addAction(self.actionSalir)
         self.menuAcciones.addAction(self.actionImprimir_remates)
         self.menuAcciones.addAction(self.actionImprimir_Carrera)
+        self.menuAcciones.addAction(self.actionImprimir_Reunion)
         #self.menuAcciones.addAction(self.actionTicket)
         self.menuEdicion.addAction(self.actionEliminar_Caballo)
         self.menuEdicion.addAction(self.actionEliminar_Remate)
@@ -206,6 +211,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionCaballos.setText(_translate("Remates JCN", "Caballos"))
         self.actionImprimir_remates.setText(_translate("Remates JCN", "Imprimir Remates"))
         self.actionImprimir_Carrera.setText(_translate("Remates JCN", "Imprimir Carrera"))
+        self.actionImprimir_Reunion.setText(_translate("Remates JCN", "Imprimir Reunion"))
         self.actionTicket.setText(_translate("Remates JCN", "Imprimir Ticket"))
         self.actionEliminar_Remate.setText(_translate("Remates JCN", "Eliminar Remate"))
         self.actionEliminar_Caballo.setText(_translate("Remates JCN", "Eliminar Caballo"))
@@ -879,11 +885,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.ydata -= 15
             c.drawString(xtot, self.ydata, "Total Remate: $" + str(round(total, 2)))
             self.ydata -= 15
-            c.drawString(xtot, self.ydata, "Descuentos: $" + str(round(arendir, 2)))
+            c.drawString(xtot, self.ydata, "Descuentos: $" + str(round(arendir, -1)))
             c.saveState()
             c.setFont("Courier-Bold", 11)
             self.ydata -= 15
-            c.drawString(xtot, self.ydata, "TOTAL A PAGAR: $" + str(round(apagar, 2)))
+            c.drawString(xtot, self.ydata, "TOTAL A PAGAR: $" + str(round(apagar, -1)))
             c.restoreState()
             self.ydata -= 10
             if(i==0):
@@ -1086,3 +1092,72 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     self.sess.execute("UPDATE remate SET pagado = True WHERE id=:rem",{'rem':qry[0][0]})
                     self.lineBusca.clear()
 
+    def imprimeReunion(self):
+        car10 = 0
+        car20 = 0
+        car30 = 0
+        carN = 0
+        carTot = 0
+        tot10 = 0
+        tot20 = 0
+        tot30 = 0
+        totN = 0
+        totAll = 0
+        rendido = 0
+        pagado = 0
+        idCars = self.sess.execute("SELECT id FROM carrera WHERE idReunion = :reu", {'reu':self.idReunion})
+        c = canvas.Canvas("pdfs/reunion_"+str(self.fec)+".pdf")
+        c.setFont("Courier-Bold", 10)
+        y = 820
+        c.drawString(20, y, "Recaudación | Mesa de Remate N° "+str(self.mesa))
+        c.drawString(420, y, "Fecha: "+str(self.fec))
+        y -= 20
+        c.drawString(25, y, "N° Carrera")
+        c.drawString(110, y, "Al 10%")
+        c.drawString(190, y, "Al 20%")
+        c.drawString(270, y, "Al 30%")
+        c.drawString(345, y, "A otro %")
+        c.drawString(420, y, "Total Recaudado")
+        y -= 10
+        xgridr = [20, 90, 170, 250, 330, 410, 520]
+        ygridr = []
+        ygridr.append(y + 25)
+        for id in idCars:
+            dataCars = self.sess.execute("SELECT * FROM carrera WHERE id = :car", {'car':id[0]}).fetchall()
+            car10 = self.sess.execute("SELECT SUM(remate.total)+SUM(remate.adm) FROM remate INNER JOIN carrera ON carrera.id = remate.idCarrera WHERE carrera.id = :car AND remate.porcentaje = 0.1", {'car':id[0]}).scalar()
+            tot10 += car10
+            car20 = self.sess.execute("SELECT SUM(remate.total)+SUM(remate.adm) FROM remate INNER JOIN carrera ON carrera.id = remate.idCarrera WHERE carrera.id = :car AND remate.porcentaje = 0.2", {'car':id[0]}).scalar()
+            tot20 += car20
+            car30 = self.sess.execute("SELECT SUM(remate.total)+SUM(remate.adm) FROM remate INNER JOIN carrera ON carrera.id = remate.idCarrera WHERE carrera.id = :car AND remate.porcentaje = 0.3", {'car':id[0]}).scalar()
+            tot30 += car30
+            carN = self.sess.execute("SELECT SUM(remate.total)+SUM(remate.adm) FROM remate INNER JOIN carrera ON carrera.id = remate.idCarrera WHERE carrera.id = :car AND NOT remate.porcentaje = 0.1 AND NOT remate.porcentaje = 0.2 AND NOT remate.porcentaje = 0.3", {'car':id[0]}).scalar()
+            totN += carN
+            carTot = car10 + car20 + car30 + carN
+            totAll += carTot
+            pagado += dataCars[0][5]
+            rendido += dataCars[0][6]
+            ygridr.append(y)
+            y -= 15
+            c.drawString(45, y + 3.5, str(dataCars[0][2]))
+            c.drawString(105, y + 3.5, "$"+str(round(car10, 2)))
+            c.drawString(185, y + 3.5, "$"+str(round(car20, 2)))
+            c.drawString(265, y + 3.5, "$"+str(round(car30, 2)))
+            c.drawString(340, y + 3.5, "$"+str(round(carN, 2)))
+            c.drawString(430, y + 3.5, "$"+str(round(carTot, 2)))
+        self.sess.close()
+        ygridr.append(y)
+        y -= 15
+        c.drawString(30, y + 3.5, "Totales")
+        c.drawString(105, y + 3.5, "$"+str(round(tot10, 2)))
+        c.drawString(185, y + 3.5, "$"+str(round(tot20, 2)))
+        c.drawString(265, y + 3.5, "$"+str(round(tot30, 2)))
+        c.drawString(340, y + 3.5, "$"+str(round(totN, 2)))
+        c.drawString(430, y + 3.5, "$"+str(round(totAll, 2)))
+        ygridr.append(y)
+        c.grid(xgridr, ygridr)
+        y -= 20
+        c.setFont("Courier-Bold", 12)
+        c.drawString(20, y, "TOTAL RENDIDO $"+str(round(rendido, 2)))
+        y -= 15
+        c.drawString(20, y, "TOTAL PAGADO $"+str(round(pagado, 2)))
+        c.save()
