@@ -918,6 +918,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
         descuento = 0
         apagar = 0
         arendir = 0
+        tot10 = 0
+        tot20 = 0
+        tot30 = 0
+        totx = 0
         idrems = self.sess.execute("SELECT id FROM remate WHERE idCarrera = :car", {'car':self.idCarrera})
         c = canvas.Canvas("pdfs/carreras/rendimiento_carrera_"+str(self.nroCarrera)+".pdf")
         c.setFont("Courier-Bold", 10)
@@ -950,10 +954,18 @@ class Ui_MainWindow(QtWidgets.QWidget):
             descuento += desc
             apagar += dataRem[0][5]
             arendir += dataRem[0][6]
+            if porc == 0.1:
+                tot10 += recaudado
+            elif porc == 0.2:
+                tot20 += recaudado
+            elif porc == 0.3:
+                tot30 += recaudado
+            else:
+                totx += recaudado
             ygridr.append(y)
             y -= 15
             c.drawString(25, y + 3.5, str(dataRem[0][2]))
-            c.drawString(90, y + 3.5, str(int(dataRem[0][3]*100)))
+            c.drawString(90, y + 3.5, str(int(porc*100)))
             c.drawString(115, y + 3.5, "$"+str(round(recaudado, 2)))
             c.drawString(185, y + 3.5, "$"+str(round(adm, 2)))
             c.drawString(250, y + 3.5, "$"+str(round(sub, 2)))
@@ -973,6 +985,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
         c.grid(xgridr, ygridr)
         y -= 20
         c.setFont("Courier-Bold", 12)
+        c.drawString(20, y, "Total al 10% $"+str(round(tot10, 2)))
+        y -= 20
+        c.drawString(20, y, "Total al 20% $"+str(round(tot20, 2)))
+        y -= 20
+        c.drawString(20, y, "Total al 30% $"+str(round(tot30, 2)))
+        y -= 20
+        c.drawString(20, y, "Total al X% $"+str(round(totx, 2)))
+        y -= 20
         c.drawString(20, y, "TOTAL A RENDIR $"+str(round(arendir, 2)))
         c.save()
 
